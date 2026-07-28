@@ -1,4 +1,3 @@
-
 # # Single self-interacting unit
 
 #=
@@ -13,31 +12,45 @@ using Statistics
 using Plots
 Random.seed!(0)
 
-using HawkesPlasticNetworks; global const H = HawkesPlasticNetworks
+using HawkesPlasticNetworks; global const H = HawkesPlasticNetworks;
 ## #src
 # ## Define the parameters
 
-n_units = 1
-τ_kernel = 10.0
-w_self = 0.8
-h_in = 20.0
-initial_rate = 0.0
-n_spikes = 60_000
-bin_width = 2.0
+n_units = 1           # one unit only
+τ_kernel = 10.0       # timescale for membrane dynamics
+w_self = 0.8          # self connection weights
+h_in = 20.0           # input current
+initial_rate = 0.0    # initial rate
+n_spikes = 60_000     # total spikes in the simulation
+bin_width = 2.0       # width for the rate average
 
 # For a stable linear Hawkes process with a normalized exponential kernel, the
 # stationary rate is `h_in / (1 - w_self)`.
 theoretical_rate = h_in/(1-w_self)
+println("Theoretical rate $(round(theoretical_rate,digits=2)) Hz")
+
 ## #src
 # ## Define the population and connection
 
 population = H.PopulationExpKernelExcitatory(
-    n_units,τ_kernel; label="unit")
-connection = H.ConnectionWithWeights(
-    population,fill(w_self,n_units,n_units),population)
+    n_units,τ_kernel; label="unit");
 
-# A network contains connected populations, rather than bare populations.
-# The argument order is always post-synaptic first, then pre-synaptic.
+# the connection has the one-neuron population connected to itself
+connection = H.ConnectionWithWeights(
+    population,fill(w_self,n_units,n_units),population);
+
+#=
+**Important** to define the network, you need *connected* populations.
+This requires to re-define the connection structure for each population
+in the simulation. 
+The inputs are:
+
+H.ConnectedPopulationExpKernel(population_post,inputs_post,(connection_1,population_pre_1),
+ (connection_2,population_pre_2),...,(connection_n,population_pre_n))
+
+The argument order is always post-synaptic first, then pre-synaptic.
+=#
+
 connected_population = H.ConnectedPopulationExpKernel(
     population,fill(h_in,n_units),(connection,population))
 

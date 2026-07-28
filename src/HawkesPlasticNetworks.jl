@@ -90,7 +90,15 @@ function PopulationExpKernelInhibitory(n::Integer,trace::Trace;
   label = something(label,rand_label()) 
   label = Symbol(label)
   spike_proposals = fill(Inf,n)
-  return PopulationExpKernelExcitatory(label,n,trace,spike_proposals)
+  return PopulationExpKernelInhibitory(label,n,trace,spike_proposals)
+end
+function PopulationExpKernelInhibitory(n::Integer,τ_kernel::Real;
+    label::Union{String,Nothing}=nothing)
+  trace = Trace(τ_kernel,n)
+  label = something(label,rand_label())
+  label = Symbol(label)
+  spike_proposals = fill(Inf,n)
+  return PopulationExpKernelInhibitory(label,n,trace,spike_proposals)
 end
 
 include("recorders.jl")
@@ -127,7 +135,9 @@ end
 
 # more convenient constructor, with connection arguments such as 
 # (connection_1,pop_pre_1), (connection_2,pop_pre_2), ...
-function ConnectedPopulationExpKernel(state::PopulationExpKernelExcitatory,input::Vector{Float64},
+function ConnectedPopulationExpKernel(
+    state::Union{PopulationExpKernelExcitatory,PopulationExpKernelInhibitory},
+    input::Vector{Float64},
     (conn_pre::Tuple{C,PS} where {C<:AbstractConnection,PS<:AbstractPopulation})...)
   connections = Tuple(getindex.(conn_pre,1))
   pre_states = Tuple(getindex.(conn_pre,2))
@@ -229,6 +239,14 @@ function accumulate_signal!(rates::Vector{Float64},t_now::Real,
   # rates <- rates + input_now
   decay = trace_decay(t_now,pop_pre.trace)
   mul!(rates,connection.weights,pop_pre.trace.val,decay,1.0)
+  return nothing
+end
+
+function accumulate_signal!(rates::Vector{Float64},t_now::Real,
+    ::AbstractPopulation,connection::ConnectionWithWeights,
+    pop_pre::PopulationExpKernelInhibitory)
+  decay = trace_decay(t_now,pop_pre.trace)
+  mul!(rates,connection.weights,pop_pre.trace.val,-decay,1.0)
   return nothing
 end
 

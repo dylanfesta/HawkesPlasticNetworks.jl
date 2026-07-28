@@ -30,12 +30,23 @@ end
     end
 
     @testset "Population convenience construction" begin
-        pop = HawkesPlasticNetworks.PopulationExpKernelExcitatory(
+        pop_exc = HawkesPlasticNetworks.PopulationExpKernelExcitatory(
             2,0.5;label="exc")
+        pop_inh = HawkesPlasticNetworks.PopulationExpKernelInhibitory(
+            3,0.25;label="inh")
+        pop_inh_from_trace = HawkesPlasticNetworks.PopulationExpKernelInhibitory(
+            1,HawkesPlasticNetworks.Trace(0.75,1);label="inh_trace")
 
-        @test pop.label == :exc
-        @test pop.trace.τ == 0.5
-        @test pop.trace.val == zeros(2)
+        @test pop_exc.label == :exc
+        @test pop_exc.trace.τ == 0.5
+        @test pop_exc.trace.val == zeros(2)
+        @test pop_inh isa HawkesPlasticNetworks.PopulationExpKernelInhibitory
+        @test pop_inh.label == :inh
+        @test pop_inh.trace.τ == 0.25
+        @test pop_inh.trace.val == zeros(3)
+        @test pop_inh_from_trace isa
+            HawkesPlasticNetworks.PopulationExpKernelInhibitory
+        @test pop_inh_from_trace.trace.τ == 0.75
     end
 
     @testset "RecorderPopulationRate construction" begin
@@ -109,6 +120,29 @@ end
         @test HawkesPlasticNetworks.reset!(network) === nothing
         @test pop.trace.val == [0.0]
         @test rec.rates == zeros(5)
+    end
+
+    @testset "Inhibitory populations subtract positive connection weights" begin
+        pop_post = HawkesPlasticNetworks.PopulationExpKernelInhibitory(
+            1,2.0;label="post")
+        pop_exc = HawkesPlasticNetworks.PopulationExpKernelExcitatory(
+            1,2.0;label="exc")
+        pop_inh = HawkesPlasticNetworks.PopulationExpKernelInhibitory(
+            1,2.0;label="inh")
+        connection_exc = HawkesPlasticNetworks.ConnectionWithWeights(
+            pop_post,fill(0.6,1,1),pop_exc)
+        connection_inh = HawkesPlasticNetworks.ConnectionWithWeights(
+            pop_post,fill(0.4,1,1),pop_inh)
+        connected = HawkesPlasticNetworks.ConnectedPopulationExpKernel(
+            pop_post,[1.0],
+            (connection_exc,pop_exc),(connection_inh,pop_inh))
+        rates = zeros(1)
+
+        HawkesPlasticNetworks.set_initial_rates!(pop_exc,2.0)
+        HawkesPlasticNetworks.set_initial_rates!(pop_inh,3.0)
+        @test HawkesPlasticNetworks.compute_rates!(
+            rates,0.0,connected) === nothing
+        @test rates ≈ [1.0]
     end
 
     @testset "Recorder iteration" begin
