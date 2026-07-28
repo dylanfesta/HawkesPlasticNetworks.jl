@@ -11,6 +11,11 @@ Literate.markdown(
     generated_dir;
     flavor=Literate.DocumenterFlavor(),
 )
+Literate.markdown(
+    joinpath(docs_dir,"literate","02_ei_network.jl"),
+    generated_dir;
+    flavor=Literate.DocumenterFlavor(),
+)
 
 makedocs(;
     modules=[HawkesPlasticNetworks],
@@ -27,6 +32,8 @@ makedocs(;
         "Home" => "index.md",
         "Examples" => [
             "Single self-interacting unit" => "generated/01_single_unit.md",
+            "One excitatory and one inhibitory unit" =>
+                "generated/02_ei_network.md",
         ],
     ],
 )
