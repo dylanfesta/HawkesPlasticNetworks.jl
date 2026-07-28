@@ -7,28 +7,28 @@ a single unit interacting with itself, without plasticity.
 =#
 
 # ## Initialization
-
+## #src
 using Random
 using Statistics
 using Plots
 Random.seed!(0)
 
 using HawkesPlasticNetworks; global const H = HawkesPlasticNetworks
-
+## #src
 # ## Define the parameters
 
 n_units = 1
 τ_kernel = 10.0
-w_self = 0.5
-h_in = 0.6
-initial_rate = 0.0001
-n_spikes = 20_000
+w_self = 0.8
+h_in = 20.0
+initial_rate = 0.0
+n_spikes = 60_000
 bin_width = 2.0
 
 # For a stable linear Hawkes process with a normalized exponential kernel, the
 # stationary rate is `h_in / (1 - w_self)`.
 theoretical_rate = h_in/(1-w_self)
-
+## #src
 # ## Define the population and connection
 
 population = H.PopulationExpKernelExcitatory(
@@ -94,11 +94,12 @@ plot_end = 8*relaxation_time
 idx_plot = reached_bins .& (binned_rate.times .<= plot_end)
 plot(
     binned_rate.times[idx_plot],binned_rate.rates[idx_plot];
-    label="2 s binned rate",color=:steelblue,alpha=0.6,
-    xlabel="time",ylabel="rate",ylim=(0,1.8theoretical_rate))
+    label="$(bin_width) s binned rate",color=:steelblue,alpha=1.0,
+    xlabel="time (s)",ylabel="rate (Hz)",ylim=(0,1.5theoretical_rate))
 plot!(
     t -> expected_rate(t),0,plot_end;
-    label="expected relaxation",color=:black,linewidth=3)
+    label="expected relaxation",color=:grey,linewidth=2,
+    alpha=0.6)
 hline!(
     [theoretical_rate];
     label="asymptotic rate",color=:firebrick,linestyle=:dash,linewidth=2)
