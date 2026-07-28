@@ -28,7 +28,7 @@ function RecorderPopulationTrain(population_label::Symbol,n_max_spikes::Integer;
     Tend::Real=Inf)
   times = fill(NaN,n_max_spikes)
   neurons = fill(-1,n_max_spikes)
-  RecorderPopulationTrain(population_label,n_max_spikes,times,neurons,Tstart,Tend,1)
+  RecorderPopulationTrain(population_label,n_max_spikes,times,neurons,Tstart,Tend,0)
 end
 function reset!(rec::RecorderPopulationTrain)
   fill!(rec.times,NaN)
