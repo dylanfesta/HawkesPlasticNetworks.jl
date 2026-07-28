@@ -6,6 +6,7 @@ mutable struct TestPlasticityRule <: HawkesPlasticNetworks.AbstractPlasticityRul
 end
 
 include("plasticity_asymmetric_stdp.jl")
+include("plasticity_symmetric_stdp.jl")
 
 function HawkesPlasticNetworks.apply_plasticity!(
         rule::TestPlasticityRule,

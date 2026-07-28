@@ -23,6 +23,9 @@ This is an early-stage Julia package for spiking network simulations.
   avoid clever API layers while the model set is small.
 - Favor deterministic behavior in tests and examples. Pass an RNG or seed local
   randomness when random behavior matters.
+- Always use explicit `if` statements for conditional control flow. Do not use
+  short-circuit expressions such as `condition || return`, `condition &&
+  continue`, or `condition || throw(...)`.
 
 ## Other conventions
 

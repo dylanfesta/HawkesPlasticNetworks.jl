@@ -86,16 +86,18 @@ function previous_apply!(
     weights = state.weights
     post_fired = label == state.post_label
     pre_fired = label == state.pre_label
-    (post_fired || pre_fired) || return nothing
+    if !(post_fired || pre_fired)
+        return nothing
+    end
 
     if pre_fired
         HPN.propagate!(t_fire,plast.trace_post_minus)
         scale = plast.η*((plast.B-1.0)/2.0)
-        bias = plast.η*plast.αpre
+        rate_term = plast.η*plast.αpre
         @inbounds for post_idx in axes(weights,1)
             if !plast.zero_weight_mask[post_idx,neuron]
                 weight = weights[post_idx,neuron]
-                Δweight = bias + scale*plast.trace_post_minus.val[post_idx]
+                Δweight = rate_term + scale*plast.trace_post_minus.val[post_idx]
                 weights[post_idx,neuron] = HPN.hardbounds(
                     weight+Δweight,plast.weight_min,plast.weight_max)
             end
@@ -104,11 +106,11 @@ function previous_apply!(
     if post_fired
         HPN.propagate!(t_fire,plast.trace_pre_plus)
         scale = plast.η*((plast.B+1.0)/2.0)
-        bias = plast.η*plast.αpost
+        rate_term = plast.η*plast.αpost
         @inbounds for pre_idx in axes(weights,2)
             if !plast.zero_weight_mask[neuron,pre_idx]
                 weight = weights[neuron,pre_idx]
-                Δweight = bias + scale*plast.trace_pre_plus.val[pre_idx]
+                Δweight = rate_term + scale*plast.trace_pre_plus.val[pre_idx]
                 weights[neuron,pre_idx] = HPN.hardbounds(
                     weight+Δweight,plast.weight_min,plast.weight_max)
             end
@@ -133,16 +135,18 @@ function improved_apply!(
     weights = state.weights
     post_fired = label == state.post_label
     pre_fired = label == state.pre_label
-    (post_fired || pre_fired) || return nothing
+    if !(post_fired || pre_fired)
+        return nothing
+    end
 
     if pre_fired
         decay = HPN.trace_decay(t_fire,plast.trace_post_minus)
         scale = plast.η*((plast.B-1.0)/2.0)*decay
-        bias = plast.η*plast.αpre
+        rate_term = plast.η*plast.αpre
         @inbounds for post_idx in axes(weights,1)
             if !plast.zero_weight_mask[post_idx,neuron]
                 weight = weights[post_idx,neuron]
-                Δweight = bias + scale*plast.trace_post_minus.val[post_idx]
+                Δweight = rate_term + scale*plast.trace_post_minus.val[post_idx]
                 weights[post_idx,neuron] = HPN.hardbounds(
                     weight+Δweight,plast.weight_min,plast.weight_max)
             end
@@ -151,11 +155,11 @@ function improved_apply!(
     if post_fired
         decay = HPN.trace_decay(t_fire,plast.trace_pre_plus)
         scale = plast.η*((plast.B+1.0)/2.0)*decay
-        bias = plast.η*plast.αpost
+        rate_term = plast.η*plast.αpost
         @inbounds for pre_idx in axes(weights,2)
             if !plast.zero_weight_mask[neuron,pre_idx]
                 weight = weights[neuron,pre_idx]
-                Δweight = bias + scale*plast.trace_pre_plus.val[pre_idx]
+                Δweight = rate_term + scale*plast.trace_pre_plus.val[pre_idx]
                 weights[neuron,pre_idx] = HPN.hardbounds(
                     weight+Δweight,plast.weight_min,plast.weight_max)
             end

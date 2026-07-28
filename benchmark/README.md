@@ -12,5 +12,12 @@ Then run the asymmetric STDP comparison:
 julia --project=benchmark benchmark/plasticity_asymmetric_stdp.jl
 ```
 
+To compare the current monolithic asymmetric STDP update with concretely typed
+internal weight-update kernels, run:
+
+```sh
+julia --project=benchmark benchmark/plasticity_typed_kernels.jl
+```
+
 Workload sizes, model parameters, initial values, and BenchmarkTools settings
 are constants at the top of the benchmark file.

@@ -93,9 +93,15 @@ end
 function RecorderPopulationRate(population_label::Symbol,n_neurons::Integer,Tend::Real;
     Tstart::Real=0.0,
     Δt::Real=10.0)
-  n_neurons > 0 || throw(ArgumentError("n_neurons must be positive"))
-  Δt > 0 || throw(ArgumentError("Δt must be positive"))
-  Tend >= Tstart || throw(ArgumentError("Tend must not be smaller than Tstart"))
+  if !(n_neurons > 0)
+    throw(ArgumentError("n_neurons must be positive"))
+  end
+  if !(Δt > 0)
+    throw(ArgumentError("Δt must be positive"))
+  end
+  if !(Tend >= Tstart)
+    throw(ArgumentError("Tend must not be smaller than Tstart"))
+  end
 
   n_bins = ceil(Int,(Tend-Tstart)/Δt)
   times = Tstart .+ ((1:n_bins) .- 0.5) .* Δt

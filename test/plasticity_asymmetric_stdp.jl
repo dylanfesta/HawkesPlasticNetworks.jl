@@ -9,7 +9,9 @@ function eager_reference_apply!(
     neuron_fire_idx::Int)
     post_fired = pop_fire_label == connection.post_pop_label
     pre_fired = pop_fire_label == connection.pre_pop_label
-    (post_fired || pre_fired) || return nothing
+    if !(post_fired || pre_fired)
+        return nothing
+    end
 
     if pre_fired
         HPN.propagate!(t_fire,plast.trace_post_minus)
@@ -21,12 +23,12 @@ function eager_reference_apply!(
     weights = connection.weights
     if pre_fired
         trace_scale = plast.η*((plast.B-1.0)/2.0)
-        bias = plast.η*plast.αpre
+        rate_term = plast.η*plast.αpre
         @inbounds for post_idx in axes(weights,1)
             if !plast.zero_weight_mask[post_idx,neuron_fire_idx]
                 weight = weights[post_idx,neuron_fire_idx]
                 Δweight =
-                    bias + trace_scale*plast.trace_post_minus.val[post_idx]
+                    rate_term + trace_scale*plast.trace_post_minus.val[post_idx]
                 weights[post_idx,neuron_fire_idx] = HPN.hardbounds(
                     weight+Δweight,plast.weight_min,plast.weight_max)
             end
@@ -34,12 +36,12 @@ function eager_reference_apply!(
     end
     if post_fired
         trace_scale = plast.η*((plast.B+1.0)/2.0)
-        bias = plast.η*plast.αpost
+        rate_term = plast.η*plast.αpost
         @inbounds for pre_idx in axes(weights,2)
             if !plast.zero_weight_mask[neuron_fire_idx,pre_idx]
                 weight = weights[neuron_fire_idx,pre_idx]
                 Δweight =
-                    bias + trace_scale*plast.trace_pre_plus.val[pre_idx]
+                    rate_term + trace_scale*plast.trace_pre_plus.val[pre_idx]
                 weights[neuron_fire_idx,pre_idx] = HPN.hardbounds(
                     weight+Δweight,plast.weight_min,plast.weight_max)
             end
@@ -150,6 +152,26 @@ end
         @test weights == unchanged_weights
         @test plast.trace_pre_plus.val == unchanged_pre
         @test plast.trace_post_minus.val == unchanged_post
+    end
+
+    @testset "Typed weight-update kernels" begin
+        pre_weights = [0.0 0.8; 0.5 0.3]
+        pre_before = copy(pre_weights)
+        pre_mask = Bool[1 0; 0 0]
+        @test HPN._apply_asymmetric_stdp_pre!(
+            pre_weights,pre_mask,[0.5,1.0],1,1.0,0.1,0.5,0.0,1.0) === nothing
+        @test pre_weights[1,1] == pre_before[1,1]
+        @test pre_weights[2,1] == 1.0
+        @test pre_weights[:,2] == pre_before[:,2]
+
+        post_weights = [0.7 0.4; 0.5 0.0]
+        post_before = copy(post_weights)
+        post_mask = Bool[0 0; 0 1]
+        @test HPN._apply_asymmetric_stdp_post!(
+            post_weights,post_mask,[1.0,2.0],2,1.0,-0.2,0.1,0.0,1.0) === nothing
+        @test post_weights[2,1] ≈ 0.4
+        @test post_weights[2,2] == post_before[2,2]
+        @test post_weights[1,:] == post_before[1,:]
     end
 
     @testset "Self connection reads before writing traces" begin
