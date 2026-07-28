@@ -5,6 +5,8 @@ mutable struct TestPlasticityRule <: HawkesPlasticNetworks.AbstractPlasticityRul
     calls::Vector{Tuple{Symbol,Symbol,Float64,Symbol,Int}}
 end
 
+include("plasticity_asymmetric_stdp.jl")
+
 function HawkesPlasticNetworks.apply_plasticity!(
         rule::TestPlasticityRule,
         connection::HawkesPlasticNetworks.ConnectionWithWeights,

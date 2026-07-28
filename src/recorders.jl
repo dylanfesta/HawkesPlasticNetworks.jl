@@ -1,18 +1,22 @@
+#= 
+This is a sub-section of HawkesPlasticNetworks.jl for 
+recorders, that is the components that save stuff during the simulation.
+
+General principle: recorder called at ever spike time
+with all the available information on the spike event
+The recorder should point internally at what it needs to record.
+
+@inline function record_stuff!(
+     the_recorder::AbstractRecorder,
+     t_now::Real,
+     pop_fire_idx::Integer,
+     pop_fire_label::Symbol,
+     neuron_fire_idx::Integer)
+  return nothing  
+end
+=#
 
 
-
-# General principle: recorder called at ever spike time
-# with all the available information on the spike event
-# The recorder should point internally at what it needs to record.
-
-# @inline function record_stuff!(
-#      the_recorder::AbstractRecorder,
-#      t_now::Real,
-#      pop_fire_idx::Integer,
-#      pop_fire_label::Symbol,
-#      neuron_fire_idx::Integer)
-#   return nothing  
-# end
 
 mutable struct RecorderPopulationTrain <: AbstractRecorder
   population_label::Symbol

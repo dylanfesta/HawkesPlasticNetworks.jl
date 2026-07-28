@@ -52,6 +52,8 @@ function ConnectionWithWeights(
   return ConnectionWithWeights(weights,pop_post.label,pop_pre.label,plasticity_rules,_is_plastic)
 end
 
+include("plasticity_rules.jl")
+
 
 struct PopulationExpKernelExcitatory{Tr<:Trace}  <: AbstractPopulation
   label::Symbol
