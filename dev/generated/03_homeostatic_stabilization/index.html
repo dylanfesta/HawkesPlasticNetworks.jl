@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Homeostatic stabilization · HawkesPlasticNetworks.jl</title><meta name="title" content="Homeostatic stabilization · HawkesPlasticNetworks.jl"/><meta property="og:title" content="Homeostatic stabilization · HawkesPlasticNetworks.jl"/><meta property="twitter:title" content="Homeostatic stabilization · HawkesPlasticNetworks.jl"/><meta name="description" content="Documentation for HawkesPlasticNetworks.jl."/><meta property="og:description" content="Documentation for HawkesPlasticNetworks.jl."/><meta property="twitter:description" content="Documentation for HawkesPlasticNetworks.jl."/><meta property="og:url" content="https://dylanfesta.github.io/HawkesPlasticNetworks.jl/generated/03_homeostatic_stabilization/"/><meta property="twitter:url" content="https://dylanfesta.github.io/HawkesPlasticNetworks.jl/generated/03_homeostatic_stabilization/"/><link rel="canonical" href="https://dylanfesta.github.io/HawkesPlasticNetworks.jl/generated/03_homeostatic_stabilization/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">HawkesPlasticNetworks.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../01_single_unit/">Single self-interacting unit</a></li><li><a class="tocitem" href="../02_ei_network/">One excitatory and one inhibitory unit</a></li><li class="is-active"><a class="tocitem" href>Homeostatic stabilization</a><ul class="internal"><li><a class="tocitem" href="#Initialization"><span>Initialization</span></a></li><li><a class="tocitem" href="#Define-the-parameters"><span>Define the parameters</span></a></li><li><a class="tocitem" href="#Check-the-expected-rates"><span>Check the expected rates</span></a></li><li><a class="tocitem" href="#Create-expanded-weight-matrices"><span>Create expanded weight matrices</span></a></li><li><a class="tocitem" href="#Network-1,-Vogels-Sprekeler-rate-homeostatic-rule"><span>Network 1, Vogels-Sprekeler rate homeostatic rule</span></a></li><li><a class="tocitem" href="#Network-2,-homeostatic-scaling"><span>Network 2, homeostatic scaling</span></a></li></ul></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li class="is-active"><a href>Homeostatic stabilization</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Homeostatic stabilization</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/dylanfesta/HawkesPlasticNetworks.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/dylanfesta/HawkesPlasticNetworks.jl/blob/main/docs/literate/03_homeostatic_stabilization.jl#" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Stabilization-of-large-E/I-recurrent-networks-through-homeostatic-plasticity"><a class="docs-heading-anchor" href="#Stabilization-of-large-E/I-recurrent-networks-through-homeostatic-plasticity">Stabilization of large E/I recurrent networks through homeostatic plasticity</a><a id="Stabilization-of-large-E/I-recurrent-networks-through-homeostatic-plasticity-1"></a><a class="docs-heading-anchor-permalink" href="#Stabilization-of-large-E/I-recurrent-networks-through-homeostatic-plasticity" title="Permalink"></a></h1><p>In this example, I show how two flavors of homeostatic inhibitory-to-excitatory plasticity can stabilize a large E/I network, so that the exc population reaches a target firing rate determined below.</p><h2 id="Initialization"><a class="docs-heading-anchor" href="#Initialization">Initialization</a><a id="Initialization-1"></a><a class="docs-heading-anchor-permalink" href="#Initialization" title="Permalink"></a></h2><pre><code class="language-julia hljs">using Random
+using Statistics
+
+
+using Distributions
+using Plots, Colors
+Random.seed!(0)
+
+using HawkesPlasticNetworks; global const H = HawkesPlasticNetworks</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">HawkesPlasticNetworks</code></pre><h2 id="Define-the-parameters"><a class="docs-heading-anchor" href="#Define-the-parameters">Define the parameters</a><a id="Define-the-parameters-1"></a><a class="docs-heading-anchor-permalink" href="#Define-the-parameters" title="Permalink"></a></h2><pre><code class="language-julia hljs">ne = 100       # number of excitatory neurons
+ni = 20        # number of inhibitory neurons
+τ_e = 20E-3    # time constant for excitatory neurons
+τ_i = 10E-3    # time constant for inhibitory neurons
+
+n_spikes = 2_000_000  # total number of spikes to simulate (for all neurons!)
+
+w_ee = 1.295       # excitatory-to-excitatory connection weight
+w_ie = 1.2         # excitatory-to-inhibitory connection weight
+w_ei_example = 1.2 # inhibitory-to-excitatory connection weight (this will actually come from plasticity)
+w_ii = 1.0         # inhibitory-to-inhibitory connection weight
+
+h_e = 40.0     # external input to excitatory neurons
+h_i = 10.0     # external input to inhibitory neurons
+
+p_ee = 0.4     # sparseness for E-&gt;E
+p_ei = 1.0     # sparseness for I-&gt;E
+p_ie = 0.6     # sparseness for E-&gt;I
+p_ii = 0.8     # sparseness for I-&gt;I
+
+bin_width = 5.0 # bin width for rate recording
+
+n_tot = ne + ni
+idx_e = 1:ne
+idx_i = ne+1:n_tot;</code></pre><h2 id="Check-the-expected-rates"><a class="docs-heading-anchor" href="#Check-the-expected-rates">Check the expected rates</a><a id="Check-the-expected-rates-1"></a><a class="docs-heading-anchor-permalink" href="#Check-the-expected-rates" title="Permalink"></a></h2><pre><code class="language-julia hljs">rate_example_e,rate_example_i = H.expected_rate_EI(
+    w_ee,w_ie,w_ei_example,w_ii,
+    h_e,h_i)
+
+re_target = rate_example_e # the target rate will be the same we calculate here
+ri_target = rate_example_i
+
+println(&quot;Expected excitatory rate: &quot;,round(rate_example_e;digits=2))
+println(&quot;Expected inhibitory rate: &quot;,round(rate_example_i;digits=2))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Expected excitatory rate: 80.0
+Expected inhibitory rate: 53.0</code></pre><h2 id="Create-expanded-weight-matrices"><a class="docs-heading-anchor" href="#Create-expanded-weight-matrices">Create expanded weight matrices</a><a id="Create-expanded-weight-matrices-1"></a><a class="docs-heading-anchor-permalink" href="#Create-expanded-weight-matrices" title="Permalink"></a></h2><pre><code class="language-julia hljs">wmat_ee = H.generate_sparse_matrix_fixed_input(ne,ne,w_ee,p_ee;self_connections=false)
+wmat_ie = H.generate_sparse_matrix_fixed_input(ni,ne,w_ie,p_ie)
+wmat_ii = H.generate_sparse_matrix_fixed_input(
+    ni,ni,w_ii,p_ii;self_connections=false);</code></pre><p>We still need to initialize wmat_ei, the plastic part let&#39;s use a very weak long-tailed distribution for the weights with this choice, we expect the network to be unstable at first</p><pre><code class="language-julia hljs">wmat_ei_start = H.generate_sparse_matrix_fixed_input(ne,ni,0.01,p_ei);
+ei_distr = Exponential(3.0)
+for i in eachindex(wmat_ei_start)
+  if wmat_ei_start[i] != 0.0
+    wmat_ei_start[i] *= rand(ei_distr)
+  end
+end
+ei_connection_mask = .!iszero.(wmat_ei_start);</code></pre><p>And a full version for plotting purposes</p><pre><code class="language-julia hljs">wmat_full_start = Matrix{Float64}(undef,n_tot,n_tot)
+wmat_full_start[idx_e,idx_e] = wmat_ee
+wmat_full_start[idx_e,idx_i] = .- wmat_ei_start
+wmat_full_start[idx_i,idx_e] = wmat_ie
+wmat_full_start[idx_i,idx_i] = .- wmat_ii
+
+function do_colormap(minval::Real,maxval::Real;
+    cminus=:red,czero=:white,cplus=:blue,
+    ncolors::Integer=500)
+  if minval &gt;= 0
+    return cgrad([czero,cplus], [0,1])
+  end
+  if maxval &lt;= 0
+    return cgrad([cminus,czero], [0,1])
+  end
+  _mid = minval/(minval-maxval)
+  vcols = [cminus,fill(czero,ncolors-2)...,cplus]
+  midrange = range(_mid-1E-10,_mid+1E-10,length=ncolors-2)
+  vals = [0.,midrange...,1.]
+  return cgrad(vcols,vals)
+end
+
+function Wplot(W::Matrix{&lt;:Real},bounds::Tuple{&lt;:Real,&lt;:Real}=extrema(W);
+    title::String=&quot;&quot;)
+  N=size(W,1)
+  _cmap = do_colormap(bounds...)
+  return heatmap(W;ratio=1,
+    xlims=(0,N).+0.5,
+    ylims=(0,N).+0.5,
+    xlabel=&quot;pre&quot;,
+    ylabel=&quot;post&quot;,
+    color=_cmap,
+    clims=bounds,
+    title=title)
+end;
+
+Wplot(wmat_full_start;title=&quot;Initial recurrent weights&quot;)</code></pre><img src="5c59d58f.svg" alt="Example block output"/><h2 id="Network-1,-Vogels-Sprekeler-rate-homeostatic-rule"><a class="docs-heading-anchor" href="#Network-1,-Vogels-Sprekeler-rate-homeostatic-rule">Network 1, Vogels-Sprekeler rate homeostatic rule</a><a id="Network-1,-Vogels-Sprekeler-rate-homeostatic-rule-1"></a><a class="docs-heading-anchor-permalink" href="#Network-1,-Vogels-Sprekeler-rate-homeostatic-rule" title="Permalink"></a></h2><p>Plasticity parameters</p><pre><code class="language-julia hljs">τplast = 20E-3 # time constant in line with the kernel
+ηplast = 1E-7; # learning rate</code></pre><p>Define populations, one excitatory one inhibitory</p><pre><code class="language-julia hljs">population_exc = H.PopulationExpKernelExcitatory(
+    ne,τ_e;label=&quot;exc&quot;)
+population_inh = H.PopulationExpKernelInhibitory(
+    ni,τ_i;label=&quot;inh&quot;);</code></pre><p>Define fixed connections</p><pre><code class="language-julia hljs">connection_ee = H.ConnectionWithWeights(
+    population_exc,wmat_ee,population_exc)
+connection_ie = H.ConnectionWithWeights(
+    population_inh,wmat_ie,population_exc)
+connection_ii = H.ConnectionWithWeights(
+    population_inh,wmat_ii,population_inh);</code></pre><p>Now the plasticity rule for the inhibitory-to-excitatory weights</p><pre><code class="language-julia hljs">plast_vog_sprek = H.PlasticityVogelsSprekeler(ηplast,
+  re_target,τplast,wmat_ei_start;
+  weight_min=0.0);
+
+connection_ei = H.ConnectionWithWeights(
+    population_exc,wmat_ei_start,population_inh;
+    plasticity_rules=(plast_vog_sprek,))
+
+connected_exc = H.ConnectedPopulationExpKernel(
+    population_exc,fill(h_e,ne),
+    (connection_ee,population_exc),
+    (connection_ei,population_inh))
+connected_inh = H.ConnectedPopulationExpKernel(
+    population_inh,fill(h_i,ni),
+    (connection_ie,population_exc),
+    (connection_ii,population_inh));</code></pre><h3 id="Record-the-population-rates-and-weights"><a class="docs-heading-anchor" href="#Record-the-population-rates-and-weights">Record the population rates and weights</a><a id="Record-the-population-rates-and-weights-1"></a><a class="docs-heading-anchor-permalink" href="#Record-the-population-rates-and-weights" title="Permalink"></a></h3><p>Rate recorders allocate their bins in advance. I expect the network to be unstable at first, so I set a very long recorder duration.</p><pre><code class="language-julia hljs">target_total_rate = ne*re_target + ni*ri_target
+t_end_recorders = 100.0*n_spikes/target_total_rate
+
+rec_rate_exc = H.RecorderPopulationRate(
+    population_exc,t_end_recorders;Δt=bin_width)
+rec_rate_inh = H.RecorderPopulationRate(
+    population_inh,t_end_recorders;Δt=bin_width)
+
+rec_w_ei = H.WeightMatrixRecorder(
+    connection_ei.weights,bin_width,t_end_recorders)
+
+network = H.RecurrentNetworkExpKernel(
+    (connected_exc,connected_inh),
+    (rec_rate_exc,rec_rate_inh,rec_w_ei));</code></pre><h3 id="Run-the-simulation"><a class="docs-heading-anchor" href="#Run-the-simulation">Run the simulation</a><a id="Run-the-simulation-1"></a><a class="docs-heading-anchor-permalink" href="#Run-the-simulation" title="Permalink"></a></h3><pre><code class="language-julia hljs">function run_simulation!(network,n_spikes)
+  t_now = 0.0
+  H.reset!(network)
+  H.set_initial_rates!(connected_exc,h_e)
+  H.set_initial_rates!(connected_inh,h_i)
+  for _ in 1:n_spikes
+    t_now = H.dynamics_step!(t_now,network)
+  end
+  return t_now
+end
+
+last_spike_time = run_simulation!(network,n_spikes)
+println(&quot;Network run completed!&quot;)
+println(&quot;Last spike time: &quot;,round(last_spike_time;digits=2),&quot; s&quot;)
+
+rates_exc = H.get_content(rec_rate_exc)
+rates_inh = H.get_content(rec_rate_inh)
+weights_ei_content = H.get_content(rec_w_ei);</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Network run completed!
+Last spike time: 196.0 s</code></pre><h3 id="Convergence-toward-the-target-rates"><a class="docs-heading-anchor" href="#Convergence-toward-the-target-rates">Convergence toward the target rates</a><a id="Convergence-toward-the-target-rates-1"></a><a class="docs-heading-anchor-permalink" href="#Convergence-toward-the-target-rates" title="Permalink"></a></h3><pre><code class="language-julia hljs">my_line_width = 2
+
+plot_exc = plot(
+    rates_exc.times,rates_exc.rates;
+    label=&quot;$(bin_width) s binned rate&quot;,color=:blue,
+    linewidth=my_line_width,xlabel=&quot;&quot;,ylabel=&quot;excitatory rate (Hz)&quot;,
+    xlims=(0,maximum(rates_exc.times)),
+    ylims=(0,maximum(rates_exc.rates)*1.1),
+    legend=:bottomright)
+hline!(
+    plot_exc,[re_target];
+    label=&quot;target rate&quot;,color=:grey,linestyle=:dash,linewidth=2)
+
+plot_inh = plot(
+    rates_inh.times,rates_inh.rates;
+    label=&quot;$(bin_width) s binned rate&quot;,color=:red,
+    linewidth=my_line_width,xlabel=&quot;time (s)&quot;,
+    ylabel=&quot;inhibitory rate (Hz)&quot;,
+    xlims=(0,maximum(rates_inh.times)),
+    ylims=(0,maximum(rates_inh.rates)*1.1),
+    legend=:bottomright)
+hline!(
+    plot_inh,[ri_target];
+    label=&quot;target rate&quot;,color=:grey,linestyle=:dash,linewidth=2)
+
+plot(plot_exc,plot_inh;layout=(2,1),size=(800,600))</code></pre><img src="f74f4b29.svg" alt="Example block output"/><h3 id="Evolution-of-inhibitory-to-excitatory-weights"><a class="docs-heading-anchor" href="#Evolution-of-inhibitory-to-excitatory-weights">Evolution of inhibitory-to-excitatory weights</a><a id="Evolution-of-inhibitory-to-excitatory-weights-1"></a><a class="docs-heading-anchor-permalink" href="#Evolution-of-inhibitory-to-excitatory-weights" title="Permalink"></a></h3><p>Structural zeros represent absent connections and are excluded from the summary. The shaded region spans the 0.25 to 0.75 quantiles.</p><pre><code class="language-julia hljs">n_weight_times = length(weights_ei_content.times)
+weights_ei_connected = reshape(
+    weights_ei_content.weights,n_weight_times,:)[:,vec(ei_connection_mask)]
+mean_weights_ei = vec(mean(weights_ei_connected;dims=2))
+quantiles_weights_ei = reduce(
+    hcat,quantile(row,[0.25,0.75]) for row in eachrow(weights_ei_connected))
+lower_weights_ei = vec(quantiles_weights_ei[1,:])
+upper_weights_ei = vec(quantiles_weights_ei[2,:])
+
+plot(
+    weights_ei_content.times,mean_weights_ei;
+    ribbon=(
+        mean_weights_ei .- lower_weights_ei,
+        upper_weights_ei .- mean_weights_ei),
+    fillalpha=0.25,
+    label=&quot;mean with 0.25–0.75 quantiles&quot;,
+    color=:purple,
+    linewidth=my_line_width,
+    xlabel=&quot;time (s)&quot;,
+    ylabel=&quot;inhibitory-to-excitatory weight&quot;,
+    xlims=(0,maximum(weights_ei_content.times)),
+    legend=:bottomright)
+hline!(
+    [w_ei_example/ni]; # the expected is the sum over inhibitory inputs, so must divide to match single avg weight
+    label=&quot;expected weight&quot;,color=:grey,linestyle=:dash,linewidth=2)</code></pre><img src="942cc58a.svg" alt="Example block output"/><h3 id="Recurrent-weights-after-training"><a class="docs-heading-anchor" href="#Recurrent-weights-after-training">Recurrent weights after training</a><a id="Recurrent-weights-after-training-1"></a><a class="docs-heading-anchor-permalink" href="#Recurrent-weights-after-training" title="Permalink"></a></h3><pre><code class="language-julia hljs">wmat_full_after_training = copy(wmat_full_start)
+wmat_full_after_training[idx_e,idx_i] = .-connection_ei.weights
+
+Wplot(wmat_full_after_training;title=&quot;Recurrent weights after training&quot;)</code></pre><img src="c3367d32.svg" alt="Example block output"/><p>wow, much blanket!</p><h2 id="Network-2,-homeostatic-scaling"><a class="docs-heading-anchor" href="#Network-2,-homeostatic-scaling">Network 2, homeostatic scaling</a><a id="Network-2,-homeostatic-scaling-1"></a><a class="docs-heading-anchor-permalink" href="#Network-2,-homeostatic-scaling" title="Permalink"></a></h2><pre><code class="language-julia hljs">s_hom = +1    # +1 for inhibitory presynaptic neuron (like here) -1 for excitatory presynaptic neuron
+τ_hom = 10.0  # long timescale for rate integration
+η_hom = 1E-4; # multiplicative learning rate</code></pre><p>Define fresh populations and connections so that this simulation starts from the same state as the Vogels-Sprekeler simulation.</p><pre><code class="language-julia hljs">population_exc_stdhs = H.PopulationExpKernelExcitatory(
+    ne,τ_e;label=&quot;exc_stdhs&quot;)
+population_inh_stdhs = H.PopulationExpKernelInhibitory(
+    ni,τ_i;label=&quot;inh_stdhs&quot;);
+
+connection_ee_stdhs = H.ConnectionWithWeights(
+    population_exc_stdhs,wmat_ee,population_exc_stdhs)
+connection_ie_stdhs = H.ConnectionWithWeights(
+    population_inh_stdhs,wmat_ie,population_exc_stdhs)
+connection_ii_stdhs = H.ConnectionWithWeights(
+    population_inh_stdhs,wmat_ii,population_inh_stdhs);</code></pre><p>Recover the initial positive E&lt;-I weights from the full matrix.</p><pre><code class="language-julia hljs">wmat_ei_start_stdhs = .-copy(wmat_full_start[idx_e,idx_i])
+plast_stdhs = H.PlasticityHomeostaticScaling(
+    η_hom,re_target,s_hom,τ_hom,wmat_ei_start_stdhs;
+    weight_min=0.0)
+
+connection_ei_stdhs = H.ConnectionWithWeights(
+    population_exc_stdhs,wmat_ei_start_stdhs,population_inh_stdhs;
+    plasticity_rules=(plast_stdhs,))
+
+connected_exc_stdhs = H.ConnectedPopulationExpKernel(
+    population_exc_stdhs,fill(h_e,ne),
+    (connection_ee_stdhs,population_exc_stdhs),
+    (connection_ei_stdhs,population_inh_stdhs))
+connected_inh_stdhs = H.ConnectedPopulationExpKernel(
+    population_inh_stdhs,fill(h_i,ni),
+    (connection_ie_stdhs,population_exc_stdhs),
+    (connection_ii_stdhs,population_inh_stdhs));</code></pre><h3 id="Record-the-population-rates-and-weights-2"><a class="docs-heading-anchor" href="#Record-the-population-rates-and-weights-2">Record the population rates and weights</a><a class="docs-heading-anchor-permalink" href="#Record-the-population-rates-and-weights-2" title="Permalink"></a></h3><pre><code class="language-julia hljs">rec_rate_exc_stdhs = H.RecorderPopulationRate(
+    population_exc_stdhs,t_end_recorders;Δt=bin_width)
+rec_rate_inh_stdhs = H.RecorderPopulationRate(
+    population_inh_stdhs,t_end_recorders;Δt=bin_width)
+rec_w_ei_stdhs = H.WeightMatrixRecorder(
+    connection_ei_stdhs.weights,bin_width,t_end_recorders)
+
+network_stdhs = H.RecurrentNetworkExpKernel(
+    (connected_exc_stdhs,connected_inh_stdhs),
+    (rec_rate_exc_stdhs,rec_rate_inh_stdhs,rec_w_ei_stdhs));</code></pre><h3 id="Run-the-simulation-2"><a class="docs-heading-anchor" href="#Run-the-simulation-2">Run the simulation</a><a class="docs-heading-anchor-permalink" href="#Run-the-simulation-2" title="Permalink"></a></h3><pre><code class="language-julia hljs">function run_simulation_stdhs!(network,n_spikes)
+  t_now = 0.0
+  H.reset!(network)
+  H.set_initial_rates!(connected_exc_stdhs,h_e)
+  H.set_initial_rates!(connected_inh_stdhs,h_i)
+  plast_stdhs.trace_post.val .= re_target
+  plast_stdhs.trace_post.t_last = 0.0
+  for _ in 1:n_spikes
+    t_now = H.dynamics_step!(t_now,network)
+  end
+  return t_now
+end
+
+last_spike_time_stdhs = run_simulation_stdhs!(network_stdhs,n_spikes)
+println(&quot;STDHS network run completed!&quot;)
+println(
+    &quot;Last spike time: &quot;,round(last_spike_time_stdhs;digits=2),&quot; s&quot;)
+
+rates_exc_stdhs = H.get_content(rec_rate_exc_stdhs)
+rates_inh_stdhs = H.get_content(rec_rate_inh_stdhs)
+weights_ei_content_stdhs = H.get_content(rec_w_ei_stdhs);</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">STDHS network run completed!
+Last spike time: 221.54 s</code></pre><h3 id="Convergence-toward-the-target-rates-2"><a class="docs-heading-anchor" href="#Convergence-toward-the-target-rates-2">Convergence toward the target rates</a><a class="docs-heading-anchor-permalink" href="#Convergence-toward-the-target-rates-2" title="Permalink"></a></h3><pre><code class="language-julia hljs">plot_exc_stdhs = plot(
+    rates_exc_stdhs.times,rates_exc_stdhs.rates;
+    label=&quot;$(bin_width) s binned rate&quot;,color=:blue,
+    linewidth=my_line_width,xlabel=&quot;&quot;,ylabel=&quot;excitatory rate (Hz)&quot;,
+    xlims=(0,maximum(rates_exc_stdhs.times)),
+    ylims=(0,maximum(rates_exc_stdhs.rates)*1.1),
+    legend=:bottomright)
+hline!(
+    plot_exc_stdhs,[re_target];
+    label=&quot;target rate&quot;,color=:grey,linestyle=:dash,linewidth=2)
+
+plot_inh_stdhs = plot(
+    rates_inh_stdhs.times,rates_inh_stdhs.rates;
+    label=&quot;$(bin_width) s binned rate&quot;,color=:red,
+    linewidth=my_line_width,xlabel=&quot;time (s)&quot;,
+    ylabel=&quot;inhibitory rate (Hz)&quot;,
+    xlims=(0,maximum(rates_inh_stdhs.times)),
+    ylims=(0,maximum(rates_inh_stdhs.rates)*1.1),
+    legend=:bottomright)
+hline!(
+    plot_inh_stdhs,[ri_target];
+    label=&quot;target rate&quot;,color=:grey,linestyle=:dash,linewidth=2)
+
+plot(plot_exc_stdhs,plot_inh_stdhs;layout=(2,1),size=(800,600))</code></pre><img src="016db6d0.svg" alt="Example block output"/><h3 id="Evolution-of-inhibitory-to-excitatory-weights-2"><a class="docs-heading-anchor" href="#Evolution-of-inhibitory-to-excitatory-weights-2">Evolution of inhibitory-to-excitatory weights</a><a class="docs-heading-anchor-permalink" href="#Evolution-of-inhibitory-to-excitatory-weights-2" title="Permalink"></a></h3><pre><code class="language-julia hljs">n_weight_times_stdhs = length(weights_ei_content_stdhs.times)
+weights_ei_connected_stdhs = reshape(
+    weights_ei_content_stdhs.weights,n_weight_times_stdhs,:)[:,
+    vec(ei_connection_mask)]
+mean_weights_ei_stdhs = vec(mean(weights_ei_connected_stdhs;dims=2))
+quantiles_weights_ei_stdhs = reduce(
+    hcat,
+    quantile(row,[0.25,0.75])
+    for row in eachrow(weights_ei_connected_stdhs))
+lower_weights_ei_stdhs = vec(quantiles_weights_ei_stdhs[1,:])
+upper_weights_ei_stdhs = vec(quantiles_weights_ei_stdhs[2,:])
+
+plot(
+    weights_ei_content_stdhs.times,mean_weights_ei_stdhs;
+    ribbon=(
+        mean_weights_ei_stdhs .- lower_weights_ei_stdhs,
+        upper_weights_ei_stdhs .- mean_weights_ei_stdhs),
+    fillalpha=0.25,
+    label=&quot;mean with 0.25–0.75 quantiles&quot;,
+    color=:purple,
+    linewidth=my_line_width,
+    xlabel=&quot;time (s)&quot;,
+    ylabel=&quot;inhibitory-to-excitatory weight&quot;,
+    xlims=(0,maximum(weights_ei_content_stdhs.times)),
+    legend=:bottomright)
+hline!(
+    [w_ei_example/ni];
+    label=&quot;expected weight&quot;,color=:grey,linestyle=:dash,linewidth=2)</code></pre><img src="64d4c6ef.svg" alt="Example block output"/><h3 id="Recurrent-weights-after-training-2"><a class="docs-heading-anchor" href="#Recurrent-weights-after-training-2">Recurrent weights after training</a><a class="docs-heading-anchor-permalink" href="#Recurrent-weights-after-training-2" title="Permalink"></a></h3><pre><code class="language-julia hljs">wmat_full_after_stdhs = copy(wmat_full_start)
+wmat_full_after_stdhs[idx_e,idx_i] = .-connection_ei_stdhs.weights
+
+Wplot(wmat_full_after_stdhs;title=&quot;Recurrent weights after STDHS training&quot;)</code></pre><img src="657b9494.svg" alt="Example block output"/><p>Look! It&#39;s sparse!</p><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../02_ei_network/">« One excitatory and one inhibitory unit</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Wednesday 29 July 2026 14:00">Wednesday 29 July 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
