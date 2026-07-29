@@ -13,6 +13,11 @@ abstract type AbstractConnectedPopulation end
 # A connection represents the interaction between pre- and post-synaptic populations
 # It includes the population themselves, and also possible plasticity rules!
 abstract type AbstractConnection end
+
+"""
+Supertype for connections that store a weight matrix and plasticity rules.
+"""
+abstract type AbstractConnectionWithWeights <: AbstractConnection end
 # Plasticity rules change connection weights
 abstract type AbstractPlasticityRule end
 
@@ -31,25 +36,112 @@ struct NoPlasticity <: AbstractPlasticityRule end
 
 # Now include different sub-components
 include("analytics.jl")
+include("weight_matrix_utilities.jl")
 include("traces.jl")
 
 
-mutable struct ConnectionWithWeights{
-    PR<:Tuple{Vararg{AbstractPlasticityRule}}} <: AbstractConnection
+struct ConnectionWithWeights{
+    PR<:Tuple{Vararg{AbstractPlasticityRule}}} <: AbstractConnectionWithWeights
   weights::Matrix{Float64}
   post_pop_label::Symbol
   pre_pop_label::Symbol
   plasticity_rules::PR
-  is_plastic::Bool
+  is_plastic::Base.RefValue{Bool}
+end
+
+function _connection_with_weights(
+    connection_type::Type{<:AbstractConnectionWithWeights},
+    weights::Matrix{Float64},
+    post_pop_label::Symbol,
+    pre_pop_label::Symbol,
+    plasticity_rules::PR,
+    is_plastic::Bool) where {PR<:Tuple{Vararg{AbstractPlasticityRule}}}
+  return connection_type(
+    weights,post_pop_label,pre_pop_label,plasticity_rules,Ref(is_plastic))
+end
+
+function _connection_with_weights(
+    connection_type::Type{<:AbstractConnectionWithWeights},
+    pop_post::AbstractPopulation,weights::Matrix{Float64},pop_pre::AbstractPopulation;
+    plasticity_rules::Tuple{Vararg{AbstractPlasticityRule}}=Tuple{}(),
+    is_plastic::Union{Nothing,Bool}=nothing)
+  _is_plastic = something(is_plastic, ! isempty(plasticity_rules))
+  return _connection_with_weights(
+    connection_type,weights,pop_post.label,pop_pre.label,
+    plasticity_rules,_is_plastic)
+end
+
+function ConnectionWithWeights(
+    weights::Matrix{Float64},
+    post_pop_label::Symbol,
+    pre_pop_label::Symbol,
+    plasticity_rules::PR,
+    is_plastic::Bool) where {PR<:Tuple{Vararg{AbstractPlasticityRule}}}
+  return _connection_with_weights(
+    ConnectionWithWeights,weights,post_pop_label,pre_pop_label,
+    plasticity_rules,is_plastic)
 end
 
 function ConnectionWithWeights(
     pop_post::AbstractPopulation,weights::Matrix{Float64},pop_pre::AbstractPopulation;
     plasticity_rules::Tuple{Vararg{AbstractPlasticityRule}}=Tuple{}(),
     is_plastic::Union{Nothing,Bool}=nothing)
+  return _connection_with_weights(
+    ConnectionWithWeights,pop_post,weights,pop_pre;
+    plasticity_rules=plasticity_rules,is_plastic=is_plastic)
+end
 
-  _is_plastic = something(is_plastic, ! isempty(plasticity_rules))
-  return ConnectionWithWeights(weights,pop_post.label,pop_pre.label,plasticity_rules,_is_plastic)
+"""
+Weighted connection that participates in plasticity but transmits no signal.
+"""
+struct ConnectionNonInteracting{
+    PR<:Tuple{Vararg{AbstractPlasticityRule}}} <: AbstractConnectionWithWeights
+  weights::Matrix{Float64}
+  post_pop_label::Symbol
+  pre_pop_label::Symbol
+  plasticity_rules::PR
+  is_plastic::Base.RefValue{Bool}
+end
+
+function ConnectionNonInteracting(
+    weights::Matrix{Float64},
+    post_pop_label::Symbol,
+    pre_pop_label::Symbol,
+    plasticity_rules::PR,
+    is_plastic::Bool) where {PR<:Tuple{Vararg{AbstractPlasticityRule}}}
+  return _connection_with_weights(
+    ConnectionNonInteracting,weights,post_pop_label,pre_pop_label,
+    plasticity_rules,is_plastic)
+end
+
+function ConnectionNonInteracting(
+    pop_post::AbstractPopulation,weights::Matrix{Float64},pop_pre::AbstractPopulation;
+    plasticity_rules::Tuple{Vararg{AbstractPlasticityRule}}=Tuple{}(),
+    is_plastic::Union{Nothing,Bool}=nothing)
+  return _connection_with_weights(
+    ConnectionNonInteracting,pop_post,weights,pop_pre;
+    plasticity_rules=plasticity_rules,is_plastic=is_plastic)
+end
+
+
+"""
+    plasticity_on!(connection)
+
+Activate plasticity for a connection (all rules included).
+"""
+function plasticity_on!(connection::AbstractConnectionWithWeights)
+  connection.is_plastic[] = true
+  return nothing
+end
+
+"""
+    plasticity_off!(connection)
+
+Deactivate plasticity for a connection (all rules included).
+"""
+function plasticity_off!(connection::AbstractConnectionWithWeights)
+  connection.is_plastic[] = false
+  return nothing
 end
 
 include("plasticity_rules.jl")
@@ -252,6 +344,12 @@ function accumulate_signal!(rates::Vector{Float64},t_now::Real,
   return nothing
 end
 
+# here is where the ConnectionNonInteracting does nothing
+function accumulate_signal!(::Vector{Float64},::Real,
+    ::AbstractPopulation,::ConnectionNonInteracting,::AbstractPopulation)
+  return nothing
+end
+
 # multivariate thinning algorithm. From Y. Chen, 2016
 function compute_next_spike(t_now::Real,
     connected_pop::ConnectedPopulationExpKernel;Tmax::Real=100.0)
@@ -442,7 +540,7 @@ function _apply_plasticity_rules_to_connections!(
     connections::Tuple,t_fire::Real,
     population_fire_label::Symbol,neuron_fire_idx::Integer)
   connection = first(connections)
-  if connection.is_plastic
+  if connection.is_plastic[]
     _apply_plasticity_rules!(
       connection,t_fire,population_fire_label,neuron_fire_idx)
   end

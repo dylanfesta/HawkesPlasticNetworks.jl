@@ -12,6 +12,12 @@ Then run the asymmetric STDP comparison:
 julia --project=benchmark benchmark/plasticity_asymmetric_stdp.jl
 ```
 
+To compare trace propagation implementations, run:
+
+```sh
+julia --project=benchmark benchmark/01_traces_propagation.jl
+```
+
 To compare the current monolithic asymmetric STDP update with concretely typed
 internal weight-update kernels, run:
 

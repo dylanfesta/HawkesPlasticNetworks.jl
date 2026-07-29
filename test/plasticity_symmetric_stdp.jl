@@ -65,6 +65,19 @@
             0.25 + 6.0*exp(-2.0/4.0)
     end
 
+    @testset "Two-trace weight-update kernel" begin
+        weights = [0.0 0.8; 0.5 0.3]
+        before = copy(weights)
+        mask = Bool[1 0; 0 0]
+
+        @test HPN._apply_stdp_two_traces!(
+            weights,mask,[0.5,1.0],[2.0,3.0],
+            1,1.0,0.1,0.5,-0.2,0.0,1.0) === nothing
+        @test weights[1,1] == before[1,1]
+        @test weights[2,1] ≈ 0.5
+        @test weights[:,2] == before[:,2]
+    end
+
     @testset "Self connection reads all traces before writing" begin
         weights = fill(1.0,2,2)
         plast = HPN.PlasticitySymmetricSTDP(

@@ -16,6 +16,11 @@ Literate.markdown(
     generated_dir;
     flavor=Literate.DocumenterFlavor(),
 )
+Literate.markdown(
+    joinpath(docs_dir,"literate","03_homeostatic_stabilization.jl"),
+    generated_dir;
+    flavor=Literate.DocumenterFlavor(),
+)
 
 makedocs(;
     modules=[HawkesPlasticNetworks],
@@ -34,6 +39,8 @@ makedocs(;
             "Single self-interacting unit" => "generated/01_single_unit.md",
             "One excitatory and one inhibitory unit" =>
                 "generated/02_ei_network.md",
+            "Homeostatic stabilization" =>
+                "generated/03_homeostatic_stabilization.md",
         ],
     ],
 )

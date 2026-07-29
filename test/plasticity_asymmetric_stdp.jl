@@ -158,7 +158,7 @@ end
         pre_weights = [0.0 0.8; 0.5 0.3]
         pre_before = copy(pre_weights)
         pre_mask = Bool[1 0; 0 0]
-        @test HPN._apply_asymmetric_stdp_pre!(
+        @test HPN._apply_stdp_single_trace!(
             pre_weights,pre_mask,[0.5,1.0],1,1.0,0.1,0.5,0.0,1.0) === nothing
         @test pre_weights[1,1] == pre_before[1,1]
         @test pre_weights[2,1] == 1.0
@@ -167,8 +167,9 @@ end
         post_weights = [0.7 0.4; 0.5 0.0]
         post_before = copy(post_weights)
         post_mask = Bool[0 0; 0 1]
-        @test HPN._apply_asymmetric_stdp_post!(
-            post_weights,post_mask,[1.0,2.0],2,1.0,-0.2,0.1,0.0,1.0) === nothing
+        @test HPN._apply_stdp_single_trace!(
+            transpose(post_weights),transpose(post_mask),
+            [1.0,2.0],2,1.0,-0.2,0.1,0.0,1.0) === nothing
         @test post_weights[2,1] ≈ 0.4
         @test post_weights[2,2] == post_before[2,2]
         @test post_weights[1,:] == post_before[1,:]
