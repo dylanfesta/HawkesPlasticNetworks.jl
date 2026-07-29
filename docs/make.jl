@@ -31,6 +31,7 @@ makedocs(;
         prettyurls=get(ENV, "CI", "false") == "true",
         canonical="https://dylanfesta.github.io/HawkesPlasticNetworks.jl",
         repolink="https://github.com/dylanfesta/HawkesPlasticNetworks.jl",
+        edit_link="main",
         assets=String[],
     ),
     pages=[
