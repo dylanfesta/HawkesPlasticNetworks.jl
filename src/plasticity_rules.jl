@@ -47,11 +47,10 @@ with a single trace, either positive or negative.
 
 It updates the weight according to:
 
-Δw(t) = η (α + trace_scale*trace(t))
+Δw(t) = η*(α_signed + trace_scale*trace_post(t))
 w = w + w*Δw(t)
 
-The kernel updates column neuron_fire_idx of the provided matrices.
-Pass transposed matrices to update a row of the original matrices.
+The kernel updates the incoming weights in row `post_idx`.
 Masked weights are unchanged. Updated weights are restricted to
 the interval [weight_min,weight_max].
 =#
@@ -136,6 +135,12 @@ to update the plastic synapses.
 
 `τ` sets the time constant
 
+For a presynaptic spike, the synaptic increment is
+`η*(-r_target + 0.5*trace_post)`. For a postsynaptic spike, it is
+`η*0.5*trace_pre`. Because traces are normalized to have a mean equal to the
+corresponding firing rate, independent Poisson spike trains have expected drift
+`η*(-r_target*r_pre + r_pre*r_post)`.
+
 """
 struct PlasticityVogelsSprekeler{
     TP<:Trace,TM<:Trace} <: AbstractPlasticitySTDP
@@ -195,7 +200,8 @@ function apply_plasticity!(
     return nothing
   end
 
-  α = - plast.r_target
+  α_pre = - plast.r_target
+  α_post = 0.0
   weights = connection.weights
   mask = plast.zero_weight_mask
   if size(weights) != size(mask)
@@ -210,7 +216,7 @@ function apply_plasticity!(
     trace_scale_plus = 0.5*decay_plus # 0.5 factor so that B = 1
     _apply_stdp_single_trace!(
       weights,mask,plast.trace_post_plus.val,
-      neuron_fire_idx,η,α,trace_scale_plus,
+      neuron_fire_idx,η,α_pre,trace_scale_plus,
       plast.weight_min,plast.weight_max)
   end
 
@@ -219,7 +225,7 @@ function apply_plasticity!(
     trace_scale_plus = 0.5*decay_plus # 0.5 factor so that B = 1
     _apply_stdp_single_trace!(
       transpose(weights),transpose(mask),plast.trace_pre_plus.val,
-      neuron_fire_idx,η,α,trace_scale_plus,
+      neuron_fire_idx,η,α_post,trace_scale_plus,
       plast.weight_min,plast.weight_max)
   end
 
@@ -553,13 +559,13 @@ to update the plastic synapses.
 
 `α` is the target rate in isolation.
 
-`s` should be +1 for inhibitory populations and -1 for excitatory populations.
+`s` should be +1 for presynaptic inhibitory populations and -1 for presynaptic excitatory populations.
 
 `τ` sets the time constant
 
 """
 struct PlasticityHomeostaticScaling{
-    TP<:Trace,TM<:Trace} <: AbstractPlasticitySTDP
+    TP<:Trace} <: AbstractPlasticitySTDP
   η::Float64
   α::Float64
   s::Float64
@@ -618,19 +624,19 @@ the interval [weight_min,weight_max].
 function _apply_stdhs_single_trace!(
     weights::AbstractMatrix{Float64},
     mask::AbstractMatrix{Bool},
-    trace::Vector{Float64},
-    neuron_fire_idx::Int,
+    post_trace::Float64,
+    post_idx::Int,
     η::Float64,
-    α::Float64,
+    α_signed::Float64,
     trace_scale::Float64,
     weight_min::Float64,
     weight_max::Float64)
-  @inbounds for post_idx in axes(weights,1)
-    if !mask[post_idx,neuron_fire_idx]
-      weight = weights[post_idx,neuron_fire_idx]
-      Δweight = η*(α + trace_scale*trace[post_idx])
-      weights[post_idx,neuron_fire_idx] =
-        hardbounds(weight+weight*Δweight,weight_min,weight_max) # the only change vs additive case is here!
+  @inbounds for pre_idx in axes(weights,2)
+    if !mask[post_idx,pre_idx]
+      weight = weights[post_idx,pre_idx]
+      Δweight = η*(α_signed+trace_scale*post_trace)
+      weights[post_idx,pre_idx] =
+        hardbounds(weight+weight*Δweight,weight_min,weight_max)
     end
   end
   return nothing
@@ -655,11 +661,12 @@ function apply_plasticity!(
   end
 
   decay = trace_decay(t_fire,plast.trace_post)
-  trace_scale = decay
+  post_trace = decay*plast.trace_post.val[neuron_fire_idx]
+  α_post = -plast.s*plast.α
+  trace_scale = plast.s
   _apply_stdhs_single_trace!(
-      transpose(weights),transpose(mask),
-      plast.trace_post.val,
-      neuron_fire_idx,plast.η,plast.α,trace_scale,
+      weights,mask,post_trace,
+      neuron_fire_idx,plast.η,α_post,trace_scale,
       plast.weight_min,plast.weight_max)
   propagate!(t_fire,plast.trace_post)
   add_firing_event_now!(plast.trace_post,neuron_fire_idx)
