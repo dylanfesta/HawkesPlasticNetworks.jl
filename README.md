@@ -5,13 +5,8 @@
 [![License: CC0-1.0](https://img.shields.io/badge/License-CC0_1.0-lightgrey.svg)](http://creativecommons.org/publicdomain/zero/1.0/)
 
 This package allows to build networks of Poisson units that can interact
-by either potentiating (excitatory) or depressing (inhibitory) each other.
-
-The kernel used is always an exponential kernel
-```math
-K(t) = A \sum_j \alpha_j e^{-(t-t_j)/\tau},
-```
-where $t_j$ is the time of the $j$-th spike from presynaptic population.
+by either potentiating (excitatory) or depressing (inhibitory) each other. 
+The kernel used is always an exponential kernel.
 
 Although the dynamics are narrowly chosen, this package focuses on 
 high performance and on synaptic plasticity, offering a wide choice
