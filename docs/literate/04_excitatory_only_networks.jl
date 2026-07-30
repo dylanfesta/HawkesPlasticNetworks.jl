@@ -46,6 +46,8 @@ initial_weight = 0.1/n_neurons
 weight_min = 1E-5
 n_recording_points = 200;
 
+off_diagonal_mask = .!Matrix{Bool}(I,n_neurons,n_neurons);
+
 # For these recurrent examples, we expose the nominal target rate through the
 # rate constant
 #
@@ -75,7 +77,7 @@ weight_max_tuning = 0.99 / n_neurons
 
 weights_start_tuning = fill(initial_weight,n_neurons,n_neurons)
 weights_start_tuning[diagind(weights_start_tuning)] .= 0.0
-weights_initial_tuning = copy(weights_start_tuning)
+weights_initial_tuning = copy(weights_start_tuning);
 
 # `PopulationExpKernelExcitatory` describes the neurons themselves. It stores
 # the number of neurons, the exponential response-kernel timescale, and a label
@@ -136,7 +138,7 @@ network_tuning = H.RecurrentNetworkExpKernel(
 ## #src
 # ### Run the tuning-regime network
 
-Random.seed!(0)
+Random.seed!(0);
 simulation_tuning = @timed let t_now = 0.0
   H.reset!(network_tuning)
   for _ in 1:n_spikes
@@ -182,7 +184,7 @@ hline!(
     linewidth=2);
 
 mean_weight_tuning =
-    vec(mean(weight_tuning.weights;dims=(2,3)))
+    vec(mean(weight_tuning.weights[:,off_diagonal_mask];dims=2))
 plot_weight_tuning = plot(
     weight_tuning.times./60,
     reshape(weight_tuning.weights,length(weight_tuning.times),:);
@@ -231,6 +233,9 @@ plot(
     layout=(1,2),
     size=(900,400))
 
+# The final matrix is sparse and symmetric. The learning rule is symmetric,
+# while the rate constraint limits how many connections can become strong.
+
 ## #src
 
 # ## Symmetric STDP in the rate-dominated regime
@@ -252,7 +257,7 @@ weight_max_blanket = Inf
 
 weights_start_blanket = fill(initial_weight,n_neurons,n_neurons)
 weights_start_blanket[diagind(weights_start_blanket)] .= 0.0
-weights_initial_blanket = copy(weights_start_blanket)
+weights_initial_blanket = copy(weights_start_blanket);
 
 population_blanket = H.PopulationExpKernelExcitatory(
     n_neurons,τ_kernel;label="blanket")
@@ -286,7 +291,7 @@ network_blanket = H.RecurrentNetworkExpKernel(
 
 # ### Run the rate-dominated network
 
-Random.seed!(0)
+Random.seed!(0);
 simulation_blanket = @timed let t_now = 0.0
   H.reset!(network_blanket)
   for _ in 1:n_spikes
@@ -332,7 +337,7 @@ hline!(
     linewidth=2);
 
 mean_weight_blanket =
-    vec(mean(weight_blanket.weights;dims=(2,3)))
+    vec(mean(weight_blanket.weights[:,off_diagonal_mask];dims=2))
 plot_weight_blanket = plot(
     weight_blanket.times./60,
     reshape(weight_blanket.weights,length(weight_blanket.times),:);
@@ -381,6 +386,9 @@ plot(
     layout=(1,2),
     size=(900,400))
 
+# Here the final weights are very homogeneous and form a blanket of recurrent
+# excitation across the population.
+
 ## #src
 
 # ## Asymmetric STDP
@@ -392,8 +400,8 @@ plot(
 # timescale.
 
 input_asymmetric = 5.0
-target_rate_asymmetric = 2.0 # not the final rate at all
-B_asymmetric = -1/10 # again, small and negative
+target_rate_asymmetric = 4.0 # not the final rate at all
+B_asymmetric = -1/8 # again, small and negative
 α_asymmetric = -B_asymmetric*target_rate_asymmetric
 η_asymmetric = 5E-7
 γ_asymmetric = 1.0
@@ -401,7 +409,7 @@ weight_max_asymmetric = 0.99 / n_neurons
 
 weights_start_asymmetric = fill(initial_weight,n_neurons,n_neurons)
 weights_start_asymmetric[diagind(weights_start_asymmetric)] .= 0.0
-weights_initial_asymmetric = copy(weights_start_asymmetric)
+weights_initial_asymmetric = copy(weights_start_asymmetric);
 
 population_asymmetric = H.PopulationExpKernelExcitatory(
     n_neurons,τ_kernel;label="asymmetric")
@@ -435,7 +443,7 @@ network_asymmetric = H.RecurrentNetworkExpKernel(
 
 # ### Run the asymmetric network
 
-Random.seed!(0)
+Random.seed!(0);
 simulation_asymmetric = @timed let t_now = 0.0
   H.reset!(network_asymmetric)
   for _ in 1:n_spikes
@@ -481,7 +489,7 @@ hline!(
     linewidth=2);
 
 mean_weight_asymmetric =
-    vec(mean(weight_asymmetric.weights;dims=(2,3)))
+    vec(mean(weight_asymmetric.weights[:,off_diagonal_mask];dims=2))
 plot_weight_asymmetric = plot(
     weight_asymmetric.times./60,
     reshape(weight_asymmetric.weights,length(weight_asymmetric.times),:);
@@ -530,6 +538,9 @@ plot(
         title="final weights");
     layout=(1,2),
     size=(900,400))
+
+# The final connectivity is antisymmetric because the STDP learning window has
+# an antisymmetric shape, favoring one direction over its reciprocal.
 
 ## #src
 println("ALL DONE!") #src
