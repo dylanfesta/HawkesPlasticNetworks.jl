@@ -19,7 +19,7 @@ using Plots
 using HawkesPlasticNetworks
 global const H = HawkesPlasticNetworks
 
-Random.seed!(0)
+Random.seed!(0);
 
 # We use one inhibitory presynaptic neuron and one excitatory postsynaptic
 # neuron. The connection participates in plasticity but does not contribute to
@@ -42,7 +42,7 @@ simulation_end = 10_000.0
 population_exc = H.PopulationExpKernelExcitatory(
     1,τ_exc;label="exc")
 population_inh = H.PopulationExpKernelInhibitory(
-    1,τ_inh;label="inh")
+    1,τ_inh;label="inh");
 
 # Connections use `post <- pre` ordering, so this is the inhibitory-to-
 # excitatory connection.
@@ -57,7 +57,7 @@ connected_exc = H.ConnectedPopulationExpKernel(
     population_exc,[rate_post],
     (connection_inh_exc,population_inh))
 connected_inh = H.ConnectedPopulationExpKernel(
-    population_inh,[rate_pre])
+    population_inh,[rate_pre]);
 
 # The weight recorder runs after spike-triggered plasticity and records whenever
 # at least `monitor_interval` seconds have elapsed. Recording times can therefore
@@ -65,7 +65,7 @@ connected_inh = H.ConnectedPopulationExpKernel(
 recorder_weight = H.WeightMatrixRecorder(
     connection_inh_exc.weights,monitor_interval,simulation_end)
 network = H.RecurrentNetworkExpKernel(
-    (connected_exc,connected_inh),(recorder_weight,))
+    (connected_exc,connected_inh),(recorder_weight,));
 
 # ### Run the simulation
 
@@ -78,7 +78,7 @@ end
 
 weight_content = H.get_content(recorder_weight)
 weight_times = weight_content.times
-weight_values = vec(weight_content.weights[:,1,1])
+weight_values = vec(weight_content.weights[:,1,1]);
 
 # ### Measure the average connection increment per second
 
@@ -87,7 +87,7 @@ weight_values = vec(weight_content.weights[:,1,1])
 interval_starts = weight_times[1:end-1]
 interval_ends = weight_times[2:end]
 interval_midpoints = (interval_starts .+ interval_ends)./2
-dw_dt = diff(weight_values)./diff(weight_times)
+dw_dt = diff(weight_values)./diff(weight_times);
 
 # We retain the complete time series in the plot, but exclude the first third of
 # the simulation when estimating its steady average. An interval that overlaps
@@ -97,7 +97,7 @@ steady_state_idxs = interval_starts .>= warmup_end
 if !any(steady_state_idxs)
   error("No weight intervals remain after the warmup")
 end
-mean_dw_dt = mean(dw_dt[steady_state_idxs])
+mean_dw_dt = mean(dw_dt[steady_state_idxs]);
 
 # ### Compare with the analytical expectation
 
@@ -183,7 +183,7 @@ connected_pre_asym = H.ConnectedPopulationExpKernel(
 recorder_weight_asym = H.WeightMatrixRecorder(
     connection_asym.weights,monitor_interval_asym,simulation_end_asym)
 network_asym = H.RecurrentNetworkExpKernel(
-    (connected_post_asym,connected_pre_asym),(recorder_weight_asym,))
+    (connected_post_asym,connected_pre_asym),(recorder_weight_asym,));
 
 # ### Run the asymmetric-STDP simulation
 
@@ -196,7 +196,7 @@ end
 
 weight_content_asym = H.get_content(recorder_weight_asym)
 weight_times_asym = weight_content_asym.times
-weight_values_asym = vec(weight_content_asym.weights[:,1,1])
+weight_values_asym = vec(weight_content_asym.weights[:,1,1]);
 
 # ### Measure the asymmetric-STDP drift
 
@@ -211,7 +211,7 @@ steady_state_idxs_asym = interval_starts_asym .>= warmup_end_asym
 if !any(steady_state_idxs_asym)
   error("No asymmetric-STDP weight intervals remain after the warmup")
 end
-mean_dw_dt_asym = mean(dw_dt_asym[steady_state_idxs_asym])
+mean_dw_dt_asym = mean(dw_dt_asym[steady_state_idxs_asym]);
 
 # For independent Poisson spike trains, each normalized trace has a mean equal
 # to its population's rate. The depression and potentiation coefficients sum to
@@ -300,7 +300,7 @@ connected_pre_sym = H.ConnectedPopulationExpKernel(
 recorder_weight_sym = H.WeightMatrixRecorder(
     connection_sym.weights,monitor_interval_sym,simulation_end_sym)
 network_sym = H.RecurrentNetworkExpKernel(
-    (connected_post_sym,connected_pre_sym),(recorder_weight_sym,))
+    (connected_post_sym,connected_pre_sym),(recorder_weight_sym,));
 
 # ### Run the symmetric-STDP simulation
 
@@ -313,7 +313,7 @@ end
 
 weight_content_sym = H.get_content(recorder_weight_sym)
 weight_times_sym = weight_content_sym.times
-weight_values_sym = vec(weight_content_sym.weights[:,1,1])
+weight_values_sym = vec(weight_content_sym.weights[:,1,1]);
 
 # ### Measure the symmetric-STDP drift
 
@@ -328,7 +328,7 @@ steady_state_idxs_sym = interval_starts_sym .>= warmup_end_sym
 if !any(steady_state_idxs_sym)
   error("No symmetric-STDP weight intervals remain after the warmup")
 end
-mean_dw_dt_sym = mean(dw_dt_sym[steady_state_idxs_sym])
+mean_dw_dt_sym = mean(dw_dt_sym[steady_state_idxs_sym]);
 
 # The positive and negative trace coefficients again sum to `B_sym`, but
 # symmetric STDP applies this combination for both spike directions. Its

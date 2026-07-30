@@ -22,6 +22,11 @@ Literate.markdown(
     flavor=Literate.DocumenterFlavor(),
 )
 Literate.markdown(
+    joinpath(docs_dir,"literate","04_excitatory_only_networks.jl"),
+    generated_dir;
+    flavor=Literate.DocumenterFlavor(),
+)
+Literate.markdown(
     joinpath(docs_dir,"literate","z01_test_plasticity.jl"),
     generated_dir;
     flavor=Literate.DocumenterFlavor(),
@@ -47,6 +52,8 @@ makedocs(;
                 "generated/02_ei_network.md",
             "Homeostatic stabilization" =>
                 "generated/03_homeostatic_stabilization.md",
+            "Excitatory-only networks" =>
+                "generated/04_excitatory_only_networks.md",
             "Plasticity rule tests" =>
                 "generated/z01_test_plasticity.md",
         ],

@@ -19,6 +19,7 @@ below; the API index lists the currently available components.
 - [Single self-interacting unit](generated/01_single_unit.md)
 - [One exc, one inhibitory unit](generated/02_ei_network.md)
 - [Inhibitory homeostatic plasticity](generated/03_homeostatic_stabilization.md)
+- [Excitatory-only networks](generated/04_excitatory_only_networks.md)
 
 ## Tests on plasticity
 
