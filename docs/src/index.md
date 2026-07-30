@@ -20,6 +20,10 @@ below; the API index lists the currently available components.
 - [One exc, one inhibitory unit](generated/02_ei_network.md)
 - [Inhibitory homeostatic plasticity](generated/03_homeostatic_stabilization.md)
 
+## Tests on plasticity
+
+- [Plasticity rule tests](generated/z01_test_plasticity.md)
+
 ## Index
 
 ```@index
