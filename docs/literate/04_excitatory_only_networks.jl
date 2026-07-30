@@ -2,25 +2,13 @@
 
 #=
 
-This example compares three plasticity regimes in a recurrent network
-containing only excitatory neurons. The examples reproduce the tuning
-symmetric, rate-dominated symmetric, and asymmetric STDP regimes from the
-earlier `HawkesSimulator.jl` example using the current plasticity
-parametrization.
+This example shows three versions of excitatory-only 
+recurrent network with different plasticity rules:
+- Covariance-dominated symmetric STDP
+- Rate-dominated symmetric STDP
+- Covariance-dominated asymmetric STDP
 
-The old rules described the positive and negative sides of the learning
-window with `A` and `θ`. The current rules instead use a global learning rate
-`η` and a balance parameter `B`. Matching the two learning windows gives
-
-```math
-\eta = A(1-\theta), \qquad
-B = \frac{1+\theta}{1-\theta}, \qquad
-\alpha_{\mathrm{new}} =
-\frac{\alpha_{\mathrm{old}}}{1-\theta}.
-```
-
-Each network contains 30 neurons, runs for 20 million spikes, and records only
-its population rate and recurrent weights.
+The outcome depends on the rule used.
 
 =#
 
@@ -48,24 +36,22 @@ n_recording_points = 200;
 
 off_diagonal_mask = .!Matrix{Bool}(I,n_neurons,n_neurons);
 
-# For these recurrent examples, we expose the nominal target rate through the
-# rate constant
+# For these recurrent examples, 
+# we define a "target rate" and compute the resulting
+# rate constant $\alpha$ as
 #
 # ```math
 # \alpha = -B r_{\mathrm{target}}.
 # ```
-#
-# Writing `α` this way below makes the rate selected by each plasticity regime
-# explicit instead of hiding it in a numerical constant.
+# Note that this corresponds to te final rate only in rate-dominated rules
+# since we are not considering the effect of covariance
 
 # ## Symmetric STDP in the tuning regime
 
-# In the first regime, the target rate lies just above the external input.
 # The small negative value of `B` gives almost balanced potentiation and
-# depression. Correlations can nevertheless push the final rate above the
-# nominal target and produce a sparse symmetric weight matrix. We keep the
-# plasticity timescale short at 40 ms so that these spike-time correlations
-# remain visible.
+# depression, but penalizes very high rates. 
+# Note that correlations will push the final rate above the
+# nominal target rate.
 
 input_tuning = 10.0
 target_rate_tuning = 10.0
@@ -80,13 +66,13 @@ weights_start_tuning[diagind(weights_start_tuning)] .= 0.0
 weights_initial_tuning = copy(weights_start_tuning);
 
 # `PopulationExpKernelExcitatory` describes the neurons themselves. It stores
-# the number of neurons, the exponential response-kernel timescale, and a label
+# the number of neurons, the exponential synaptic kernel timescale, and a label
 # used to identify the population when spikes and plasticity events are routed.
 population_tuning = H.PopulationExpKernelExcitatory(
     n_neurons,τ_kernel;label="tuning")
 
-# The plasticity object holds the STDP parameters, its pre- and postsynaptic
-# traces, and the fixed mask of structural zeros. It acts directly on the
+# The plasticity object holds the STDP parameters and
+# its pre- and postsynaptic traces. It acts directly on the
 # recurrent weight matrix when spikes occur.
 plasticity_tuning = H.PlasticitySymmetricSTDP(
     η_tuning,B_tuning,α_tuning,α_tuning,
@@ -101,7 +87,7 @@ connection_tuning = H.ConnectionWithWeights(
     population_tuning,weights_start_tuning,population_tuning;
     plasticity_rules=(plasticity_tuning,))
 
-# A connected population combines the intrinsic population, its vector of
+# A connected population combines the population, its vector of
 # constant external input rates, and its incoming connections. Supplying the
 # population together with its self-connection makes this network recurrent.
 connected_tuning = H.ConnectedPopulationExpKernel(
@@ -240,11 +226,9 @@ plot(
 
 # ## Symmetric STDP in the rate-dominated regime
 
-# Making `B` substantially negative emphasizes the rate terms. The target rate
-# can now sit well above the external input, and excitation becomes distributed
-# more evenly while the recurrent matrix remains symmetric. Because this
-# blanket regime is driven by rates rather than precise spike timing, its
-# plasticity timescale is increased to 1 second.
+# Here B is negative and high, making this rule rate-dominated.
+# Because this blanket regime is driven by rates rather than precise 
+# spike timing, its plasticity timescale is increased.
 
 input_blanket = 5.0
 target_rate_blanket = 15.0
@@ -393,8 +377,8 @@ plot(
 
 # ## Asymmetric STDP
 
-# The final network replaces the symmetric rule with asymmetric STDP. The
-# near-balanced learning window favors directional connections: reciprocal
+# The final network has a covariance-dominatend rule with an antisymmetric
+# plasticity kernel. This favors unidirectional connections: reciprocal
 # symmetry is suppressed and many weights approach one of their bounds. Like
 # the tuning regime, its small `abs(B)` uses the short 40 ms plasticity
 # timescale.
