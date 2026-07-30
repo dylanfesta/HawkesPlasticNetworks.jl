@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Excitatory-only networks · HawkesPlasticNetworks.jl</title><meta name="title" content="Excitatory-only networks · HawkesPlasticNetworks.jl"/><meta property="og:title" content="Excitatory-only networks · HawkesPlasticNetworks.jl"/><meta property="twitter:title" content="Excitatory-only networks · HawkesPlasticNetworks.jl"/><meta name="description" content="Documentation for HawkesPlasticNetworks.jl."/><meta property="og:description" content="Documentation for HawkesPlasticNetworks.jl."/><meta property="twitter:description" content="Documentation for HawkesPlasticNetworks.jl."/><meta property="og:url" content="https://dylanfesta.github.io/HawkesPlasticNetworks.jl/generated/04_excitatory_only_networks/"/><meta property="twitter:url" content="https://dylanfesta.github.io/HawkesPlasticNetworks.jl/generated/04_excitatory_only_networks/"/><link rel="canonical" href="https://dylanfesta.github.io/HawkesPlasticNetworks.jl/generated/04_excitatory_only_networks/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">HawkesPlasticNetworks.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../01_single_unit/">Single self-interacting unit</a></li><li><a class="tocitem" href="../02_ei_network/">One excitatory and one inhibitory unit</a></li><li><a class="tocitem" href="../03_homeostatic_stabilization/">Homeostatic stabilization</a></li><li class="is-active"><a class="tocitem" href>Excitatory-only networks</a><ul class="internal"><li><a class="tocitem" href="#Initialization"><span>Initialization</span></a></li><li><a class="tocitem" href="#Symmetric-STDP-in-the-tuning-regime"><span>Symmetric STDP in the tuning regime</span></a></li><li><a class="tocitem" href="#Symmetric-STDP-in-the-rate-dominated-regime"><span>Symmetric STDP in the rate-dominated regime</span></a></li><li><a class="tocitem" href="#Asymmetric-STDP"><span>Asymmetric STDP</span></a></li></ul></li><li><a class="tocitem" href="../z01_test_plasticity/">Plasticity rule tests</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li class="is-active"><a href>Excitatory-only networks</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Excitatory-only networks</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/dylanfesta/HawkesPlasticNetworks.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/dylanfesta/HawkesPlasticNetworks.jl/blob/main/docs/literate/04_excitatory_only_networks.jl#" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Excitatory-only-networks"><a class="docs-heading-anchor" href="#Excitatory-only-networks">Excitatory-only networks</a><a id="Excitatory-only-networks-1"></a><a class="docs-heading-anchor-permalink" href="#Excitatory-only-networks" title="Permalink"></a></h1><p>This example compares three plasticity regimes in a recurrent network containing only excitatory neurons. The examples reproduce the tuning symmetric, rate-dominated symmetric, and asymmetric STDP regimes from the earlier <code>HawkesSimulator.jl</code> example using the current plasticity parametrization.</p><p>The old rules described the positive and negative sides of the learning window with <code>A</code> and <code>θ</code>. The current rules instead use a global learning rate <code>η</code> and a balance parameter <code>B</code>. Matching the two learning windows gives</p><p class="math-container">\[\eta = A(1-\theta), \qquad
+B = \frac{1+\theta}{1-\theta}, \qquad
+\alpha_{\mathrm{new}} =
+\frac{\alpha_{\mathrm{old}}}{1-\theta}.\]</p><p>We use 100 neurons instead of 10. Per-synapse weights and <code>η</code> are therefore divided by 10, while the simulation contains 10 times as many spikes. Each network records only its population rate and recurrent weights.</p><h2 id="Initialization"><a class="docs-heading-anchor" href="#Initialization">Initialization</a><a id="Initialization-1"></a><a class="docs-heading-anchor-permalink" href="#Initialization" title="Permalink"></a></h2><pre><code class="language-julia hljs">using LinearAlgebra
+using Random
+using Statistics
+using Plots
+
+using HawkesPlasticNetworks; global const H = HawkesPlasticNetworks;</code></pre><p>Parameters shared by all three networks are:</p><pre><code class="language-julia hljs">n_neurons = 100
+n_spikes = 60_000_000
+τ_kernel = 50E-3
+τ_plasticity = 40E-3
+
+initial_weight = 1E-3
+weight_min = 1E-6
+n_recording_points = 200;</code></pre><h2 id="Symmetric-STDP-in-the-tuning-regime"><a class="docs-heading-anchor" href="#Symmetric-STDP-in-the-tuning-regime">Symmetric STDP in the tuning regime</a><a id="Symmetric-STDP-in-the-tuning-regime-1"></a><a class="docs-heading-anchor-permalink" href="#Symmetric-STDP-in-the-tuning-regime" title="Permalink"></a></h2><p>In the first regime, the target rate lies just above the external input. The small negative value of <code>B</code> gives almost balanced potentiation and depression. Correlations can nevertheless push the final rate above the nominal target and produce a sparse symmetric weight matrix.</p><pre><code class="language-julia hljs">input_tuning = 10.0
+target_rate_tuning = 11.0
+η_tuning = 1.68E-7
+B_tuning = -1/21
+α_tuning = 11/21
+γ_tuning = 10.0
+weight_max_tuning = 0.01
+
+weights_start_tuning = fill(initial_weight,n_neurons,n_neurons)
+weights_start_tuning[diagind(weights_start_tuning)] .= 0.0
+
+population_tuning = H.PopulationExpKernelExcitatory(
+    n_neurons,τ_kernel;label=&quot;tuning&quot;)
+plasticity_tuning = H.PlasticitySymmetricSTDP(
+    η_tuning,B_tuning,α_tuning,α_tuning,
+    τ_plasticity,γ_tuning,weights_start_tuning;
+    weight_min=weight_min,weight_max=weight_max_tuning)
+connection_tuning = H.ConnectionWithWeights(
+    population_tuning,weights_start_tuning,population_tuning;
+    plasticity_rules=(plasticity_tuning,))
+connected_tuning = H.ConnectedPopulationExpKernel(
+    population_tuning,fill(input_tuning,n_neurons),
+    (connection_tuning,population_tuning));</code></pre><p>The expected duration at the target rate determines the recording interval. At most about 200 values from each recorder are used in the plots.</p><pre><code class="language-julia hljs">recording_end_tuning =
+    n_spikes/(n_neurons*target_rate_tuning)
+recording_interval_tuning =
+    recording_end_tuning/n_recording_points
+
+recorder_rate_tuning = H.RecorderPopulationRate(
+    population_tuning,recording_end_tuning;
+    Δt=recording_interval_tuning)
+recorder_weight_tuning = H.WeightMatrixRecorder(
+    connection_tuning.weights,recording_interval_tuning,
+    recording_end_tuning)
+network_tuning = H.RecurrentNetworkExpKernel(
+    (connected_tuning,),
+    (recorder_rate_tuning,recorder_weight_tuning));</code></pre><h3 id="Run-the-tuning-regime-network"><a class="docs-heading-anchor" href="#Run-the-tuning-regime-network">Run the tuning-regime network</a><a id="Run-the-tuning-regime-network-1"></a><a class="docs-heading-anchor-permalink" href="#Run-the-tuning-regime-network" title="Permalink"></a></h3><pre><code class="language-julia hljs">Random.seed!(0)
+t_end_tuning = let t_now = 0.0
+  H.reset!(network_tuning)
+  for _ in 1:n_spikes
+    t_now = H.dynamics_step!(t_now,network_tuning)
+  end
+  t_now
+end
+
+rate_tuning = H.get_content(recorder_rate_tuning)
+weight_tuning = H.get_content(recorder_weight_tuning)
+weights_end_tuning = copy(connection_tuning.weights)
+
+println(
+    &quot;Tuning-regime simulation completed after &quot;,
+    round(t_end_tuning/3600;digits=2),&quot; hours&quot;)
+println(&quot;Recorded rate points: &quot;,length(rate_tuning.times))
+println(&quot;Recorded weight points: &quot;,length(weight_tuning.times))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Tuning-regime simulation completed after 14.99 hours
+Recorded rate points: 197
+Recorded weight points: 198</code></pre><h3 id="Population-rate-and-mean-recurrent-weight"><a class="docs-heading-anchor" href="#Population-rate-and-mean-recurrent-weight">Population rate and mean recurrent weight</a><a id="Population-rate-and-mean-recurrent-weight-1"></a><a class="docs-heading-anchor-permalink" href="#Population-rate-and-mean-recurrent-weight" title="Permalink"></a></h3><pre><code class="language-julia hljs">plot_rate_tuning = plot(
+    rate_tuning.times./60,rate_tuning.rates;
+    label=&quot;$(round(recording_interval_tuning/60;digits=2)) min binned rate&quot;,
+    color=:steelblue,
+    linewidth=2,
+    xlabel=&quot;time (min)&quot;,
+    ylabel=&quot;population rate (Hz)&quot;,
+    ylim=(0,1.1maximum(rate_tuning.rates)),
+    legend=:bottomright)
+hline!(
+    plot_rate_tuning,[target_rate_tuning];
+    label=&quot;nominal target rate&quot;,
+    color=:grey,
+    linestyle=:dash,
+    linewidth=2);
+
+mean_weight_tuning =
+    vec(mean(weight_tuning.weights;dims=(2,3)))
+plot_weight_tuning = plot(
+    weight_tuning.times./60,mean_weight_tuning;
+    label=&quot;mean recurrent weight&quot;,
+    color=:darkorange,
+    linewidth=2,
+    xlabel=&quot;time (min)&quot;,
+    ylabel=&quot;weight&quot;,
+    ylim=(0,1.1maximum(mean_weight_tuning)),
+    legend=:bottomright);
+plot(
+    plot_rate_tuning,plot_weight_tuning;
+    layout=(2,1),
+    size=(800,600))</code></pre><img src="b2afecf4.svg" alt="Example block output"/><h3 id="Initial-and-final-recurrent-weights"><a class="docs-heading-anchor" href="#Initial-and-final-recurrent-weights">Initial and final recurrent weights</a><a id="Initial-and-final-recurrent-weights-1"></a><a class="docs-heading-anchor-permalink" href="#Initial-and-final-recurrent-weights" title="Permalink"></a></h3><pre><code class="language-julia hljs">weight_clims_tuning = (
+    0.0,
+    max(maximum(weights_start_tuning),maximum(weights_end_tuning)))
+plot(
+    heatmap(
+        weights_start_tuning;
+        ratio=1,
+        xlabel=&quot;pre&quot;,
+        ylabel=&quot;post&quot;,
+        color=:viridis,
+        clims=weight_clims_tuning,
+        title=&quot;initial weights&quot;),
+    heatmap(
+        weights_end_tuning;
+        ratio=1,
+        xlabel=&quot;pre&quot;,
+        ylabel=&quot;post&quot;,
+        color=:viridis,
+        clims=weight_clims_tuning,
+        title=&quot;final weights&quot;);
+    layout=(1,2),
+    size=(900,400))</code></pre><img src="c04ca7c8.svg" alt="Example block output"/><h2 id="Symmetric-STDP-in-the-rate-dominated-regime"><a class="docs-heading-anchor" href="#Symmetric-STDP-in-the-rate-dominated-regime">Symmetric STDP in the rate-dominated regime</a><a id="Symmetric-STDP-in-the-rate-dominated-regime-1"></a><a class="docs-heading-anchor-permalink" href="#Symmetric-STDP-in-the-rate-dominated-regime" title="Permalink"></a></h2><p>Making <code>B</code> substantially negative emphasizes the rate terms. The target rate can now sit well above the external input, and excitation becomes distributed more evenly while the recurrent matrix remains symmetric.</p><pre><code class="language-julia hljs">input_blanket = 5.0
+target_rate_blanket = 30.0
+η_blanket = 4E-7
+B_blanket = -0.6
+α_blanket = 18.0
+γ_blanket = 10.0
+weight_max_blanket = Inf
+
+weights_start_blanket = fill(initial_weight,n_neurons,n_neurons)
+weights_start_blanket[diagind(weights_start_blanket)] .= 0.0
+
+population_blanket = H.PopulationExpKernelExcitatory(
+    n_neurons,τ_kernel;label=&quot;blanket&quot;)
+plasticity_blanket = H.PlasticitySymmetricSTDP(
+    η_blanket,B_blanket,α_blanket,α_blanket,
+    τ_plasticity,γ_blanket,weights_start_blanket;
+    weight_min=weight_min,weight_max=weight_max_blanket)
+connection_blanket = H.ConnectionWithWeights(
+    population_blanket,weights_start_blanket,population_blanket;
+    plasticity_rules=(plasticity_blanket,))
+connected_blanket = H.ConnectedPopulationExpKernel(
+    population_blanket,fill(input_blanket,n_neurons),
+    (connection_blanket,population_blanket))
+
+recording_end_blanket =
+    n_spikes/(n_neurons*target_rate_blanket)
+recording_interval_blanket =
+    recording_end_blanket/n_recording_points
+
+recorder_rate_blanket = H.RecorderPopulationRate(
+    population_blanket,recording_end_blanket;
+    Δt=recording_interval_blanket)
+recorder_weight_blanket = H.WeightMatrixRecorder(
+    connection_blanket.weights,recording_interval_blanket,
+    recording_end_blanket)
+network_blanket = H.RecurrentNetworkExpKernel(
+    (connected_blanket,),
+    (recorder_rate_blanket,recorder_weight_blanket));</code></pre><h3 id="Run-the-rate-dominated-network"><a class="docs-heading-anchor" href="#Run-the-rate-dominated-network">Run the rate-dominated network</a><a id="Run-the-rate-dominated-network-1"></a><a class="docs-heading-anchor-permalink" href="#Run-the-rate-dominated-network" title="Permalink"></a></h3><pre><code class="language-julia hljs">Random.seed!(0)
+t_end_blanket = let t_now = 0.0
+  H.reset!(network_blanket)
+  for _ in 1:n_spikes
+    t_now = H.dynamics_step!(t_now,network_blanket)
+  end
+  t_now
+end
+
+rate_blanket = H.get_content(recorder_rate_blanket)
+weight_blanket = H.get_content(recorder_weight_blanket)
+weights_end_blanket = copy(connection_blanket.weights)
+
+println(
+    &quot;Rate-dominated simulation completed after &quot;,
+    round(t_end_blanket/3600;digits=2),&quot; hours&quot;)
+println(&quot;Recorded rate points: &quot;,length(rate_blanket.times))
+println(&quot;Recorded weight points: &quot;,length(weight_blanket.times))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Rate-dominated simulation completed after 5.6 hours
+Recorded rate points: 200
+Recorded weight points: 200</code></pre><h3 id="Population-rate-and-mean-recurrent-weight-2"><a class="docs-heading-anchor" href="#Population-rate-and-mean-recurrent-weight-2">Population rate and mean recurrent weight</a><a class="docs-heading-anchor-permalink" href="#Population-rate-and-mean-recurrent-weight-2" title="Permalink"></a></h3><pre><code class="language-julia hljs">plot_rate_blanket = plot(
+    rate_blanket.times./60,rate_blanket.rates;
+    label=&quot;$(round(recording_interval_blanket/60;digits=2)) min binned rate&quot;,
+    color=:steelblue,
+    linewidth=2,
+    xlabel=&quot;time (min)&quot;,
+    ylabel=&quot;population rate (Hz)&quot;,
+    ylim=(0,1.1maximum(rate_blanket.rates)),
+    legend=:bottomright)
+hline!(
+    plot_rate_blanket,[target_rate_blanket];
+    label=&quot;nominal target rate&quot;,
+    color=:grey,
+    linestyle=:dash,
+    linewidth=2);
+
+mean_weight_blanket =
+    vec(mean(weight_blanket.weights;dims=(2,3)))
+plot_weight_blanket = plot(
+    weight_blanket.times./60,mean_weight_blanket;
+    label=&quot;mean recurrent weight&quot;,
+    color=:darkorange,
+    linewidth=2,
+    xlabel=&quot;time (min)&quot;,
+    ylabel=&quot;weight&quot;,
+    ylim=(0,1.1maximum(mean_weight_blanket)),
+    legend=:bottomright);
+plot(
+    plot_rate_blanket,plot_weight_blanket;
+    layout=(2,1),
+    size=(800,600))</code></pre><img src="9ddd2513.svg" alt="Example block output"/><h3 id="Initial-and-final-recurrent-weights-2"><a class="docs-heading-anchor" href="#Initial-and-final-recurrent-weights-2">Initial and final recurrent weights</a><a class="docs-heading-anchor-permalink" href="#Initial-and-final-recurrent-weights-2" title="Permalink"></a></h3><pre><code class="language-julia hljs">weight_clims_blanket = (
+    0.0,
+    max(maximum(weights_start_blanket),maximum(weights_end_blanket)))
+plot(
+    heatmap(
+        weights_start_blanket;
+        ratio=1,
+        xlabel=&quot;pre&quot;,
+        ylabel=&quot;post&quot;,
+        color=:viridis,
+        clims=weight_clims_blanket,
+        title=&quot;initial weights&quot;),
+    heatmap(
+        weights_end_blanket;
+        ratio=1,
+        xlabel=&quot;pre&quot;,
+        ylabel=&quot;post&quot;,
+        color=:viridis,
+        clims=weight_clims_blanket,
+        title=&quot;final weights&quot;);
+    layout=(1,2),
+    size=(900,400))</code></pre><img src="cddcc7b3.svg" alt="Example block output"/><h2 id="Asymmetric-STDP"><a class="docs-heading-anchor" href="#Asymmetric-STDP">Asymmetric STDP</a><a id="Asymmetric-STDP-1"></a><a class="docs-heading-anchor-permalink" href="#Asymmetric-STDP" title="Permalink"></a></h2><p>The final network replaces the symmetric rule with asymmetric STDP. The near-balanced learning window favors directional connections: reciprocal symmetry is suppressed and many weights approach one of their bounds.</p><pre><code class="language-julia hljs">input_asymmetric = 5.0
+target_rate_asymmetric = 5.01
+η_asymmetric = 1.76E-7
+B_asymmetric = -1/11
+α_asymmetric = 0.45545454545454545
+γ_asymmetric = 1.0
+weight_max_asymmetric = 0.025
+
+weights_start_asymmetric = fill(initial_weight,n_neurons,n_neurons)
+weights_start_asymmetric[diagind(weights_start_asymmetric)] .= 0.0
+
+population_asymmetric = H.PopulationExpKernelExcitatory(
+    n_neurons,τ_kernel;label=&quot;asymmetric&quot;)
+plasticity_asymmetric = H.PlasticityAsymmetricSTDP(
+    η_asymmetric,B_asymmetric,α_asymmetric,α_asymmetric,
+    τ_plasticity,γ_asymmetric,weights_start_asymmetric;
+    weight_min=weight_min,weight_max=weight_max_asymmetric)
+connection_asymmetric = H.ConnectionWithWeights(
+    population_asymmetric,weights_start_asymmetric,population_asymmetric;
+    plasticity_rules=(plasticity_asymmetric,))
+connected_asymmetric = H.ConnectedPopulationExpKernel(
+    population_asymmetric,fill(input_asymmetric,n_neurons),
+    (connection_asymmetric,population_asymmetric))
+
+recording_end_asymmetric =
+    n_spikes/(n_neurons*target_rate_asymmetric)
+recording_interval_asymmetric =
+    recording_end_asymmetric/n_recording_points
+
+recorder_rate_asymmetric = H.RecorderPopulationRate(
+    population_asymmetric,recording_end_asymmetric;
+    Δt=recording_interval_asymmetric)
+recorder_weight_asymmetric = H.WeightMatrixRecorder(
+    connection_asymmetric.weights,recording_interval_asymmetric,
+    recording_end_asymmetric)
+network_asymmetric = H.RecurrentNetworkExpKernel(
+    (connected_asymmetric,),
+    (recorder_rate_asymmetric,recorder_weight_asymmetric));</code></pre><h3 id="Run-the-asymmetric-network"><a class="docs-heading-anchor" href="#Run-the-asymmetric-network">Run the asymmetric network</a><a id="Run-the-asymmetric-network-1"></a><a class="docs-heading-anchor-permalink" href="#Run-the-asymmetric-network" title="Permalink"></a></h3><pre><code class="language-julia hljs">Random.seed!(0)
+t_end_asymmetric = let t_now = 0.0
+  H.reset!(network_asymmetric)
+  for _ in 1:n_spikes
+    t_now = H.dynamics_step!(t_now,network_asymmetric)
+  end
+  t_now
+end
+
+rate_asymmetric = H.get_content(recorder_rate_asymmetric)
+weight_asymmetric = H.get_content(recorder_weight_asymmetric)
+weights_end_asymmetric = copy(connection_asymmetric.weights)
+
+println(
+    &quot;Asymmetric simulation completed after &quot;,
+    round(t_end_asymmetric/3600;digits=2),&quot; hours&quot;)
+println(&quot;Recorded rate points: &quot;,length(rate_asymmetric.times))
+println(&quot;Recorded weight points: &quot;,length(weight_asymmetric.times))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Asymmetric simulation completed after 17.78 hours
+Recorded rate points: 106
+Recorded weight points: 107</code></pre><h3 id="Population-rate-and-mean-recurrent-weight-3"><a class="docs-heading-anchor" href="#Population-rate-and-mean-recurrent-weight-3">Population rate and mean recurrent weight</a><a class="docs-heading-anchor-permalink" href="#Population-rate-and-mean-recurrent-weight-3" title="Permalink"></a></h3><pre><code class="language-julia hljs">plot_rate_asymmetric = plot(
+    rate_asymmetric.times./60,rate_asymmetric.rates;
+    label=&quot;$(round(recording_interval_asymmetric/60;digits=2)) min binned rate&quot;,
+    color=:steelblue,
+    linewidth=2,
+    xlabel=&quot;time (min)&quot;,
+    ylabel=&quot;population rate (Hz)&quot;,
+    ylim=(0,1.1maximum(rate_asymmetric.rates)),
+    legend=:bottomright)
+hline!(
+    plot_rate_asymmetric,[target_rate_asymmetric];
+    label=&quot;nominal target rate&quot;,
+    color=:grey,
+    linestyle=:dash,
+    linewidth=2);
+
+mean_weight_asymmetric =
+    vec(mean(weight_asymmetric.weights;dims=(2,3)))
+plot_weight_asymmetric = plot(
+    weight_asymmetric.times./60,mean_weight_asymmetric;
+    label=&quot;mean recurrent weight&quot;,
+    color=:darkorange,
+    linewidth=2,
+    xlabel=&quot;time (min)&quot;,
+    ylabel=&quot;weight&quot;,
+    ylim=(0,1.1maximum(mean_weight_asymmetric)),
+    legend=:bottomright);
+plot(
+    plot_rate_asymmetric,plot_weight_asymmetric;
+    layout=(2,1),
+    size=(800,600))</code></pre><img src="9443b0df.svg" alt="Example block output"/><h3 id="Initial-and-final-recurrent-weights-3"><a class="docs-heading-anchor" href="#Initial-and-final-recurrent-weights-3">Initial and final recurrent weights</a><a class="docs-heading-anchor-permalink" href="#Initial-and-final-recurrent-weights-3" title="Permalink"></a></h3><pre><code class="language-julia hljs">weight_clims_asymmetric = (
+    0.0,
+    max(maximum(weights_start_asymmetric),maximum(weights_end_asymmetric)))
+plot(
+    heatmap(
+        weights_start_asymmetric;
+        ratio=1,
+        xlabel=&quot;pre&quot;,
+        ylabel=&quot;post&quot;,
+        color=:viridis,
+        clims=weight_clims_asymmetric,
+        title=&quot;initial weights&quot;),
+    heatmap(
+        weights_end_asymmetric;
+        ratio=1,
+        xlabel=&quot;pre&quot;,
+        ylabel=&quot;post&quot;,
+        color=:viridis,
+        clims=weight_clims_asymmetric,
+        title=&quot;final weights&quot;);
+    layout=(1,2),
+    size=(900,400))</code></pre><img src="735abb05.svg" alt="Example block output"/><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../03_homeostatic_stabilization/">« Homeostatic stabilization</a><a class="docs-footer-nextpage" href="../z01_test_plasticity/">Plasticity rule tests »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Thursday 30 July 2026 09:26">Thursday 30 July 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
