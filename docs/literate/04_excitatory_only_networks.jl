@@ -19,9 +19,8 @@ B = \frac{1+\theta}{1-\theta}, \qquad
 \frac{\alpha_{\mathrm{old}}}{1-\theta}.
 ```
 
-We use 100 neurons instead of 10. Per-synapse weights and `η` are therefore
-divided by 10, while the simulation contains 10 times as many spikes. Each
-network records only its population rate and recurrent weights.
+Each network contains 30 neurons, runs for 20 million spikes, and records only
+its population rate and recurrent weights.
 
 =#
 
@@ -38,84 +37,131 @@ using HawkesPlasticNetworks; global const H = HawkesPlasticNetworks;
 
 # Parameters shared by all three networks are:
 
-n_neurons = 100
-n_spikes = 60_000_000
+n_neurons = 30
+n_spikes = 20_000_000 # much spike
 τ_kernel = 50E-3
-τ_plasticity = 40E-3
+τ_plasticity_low_abs_B = 40E-3
 
-initial_weight = 1E-3
-weight_min = 1E-6
+initial_weight = 0.1/n_neurons
+weight_min = 1E-5
 n_recording_points = 200;
+
+# For these recurrent examples, we expose the nominal target rate through the
+# rate constant
+#
+# ```math
+# \alpha = -B r_{\mathrm{target}}.
+# ```
+#
+# Writing `α` this way below makes the rate selected by each plasticity regime
+# explicit instead of hiding it in a numerical constant.
 
 # ## Symmetric STDP in the tuning regime
 
 # In the first regime, the target rate lies just above the external input.
 # The small negative value of `B` gives almost balanced potentiation and
 # depression. Correlations can nevertheless push the final rate above the
-# nominal target and produce a sparse symmetric weight matrix.
+# nominal target and produce a sparse symmetric weight matrix. We keep the
+# plasticity timescale short at 40 ms so that these spike-time correlations
+# remain visible.
 
 input_tuning = 10.0
-target_rate_tuning = 11.0
-η_tuning = 1.68E-7
-B_tuning = -1/21
-α_tuning = 11/21
-γ_tuning = 10.0
-weight_max_tuning = 0.01
+target_rate_tuning = 10.0
+B_tuning = -1/30 # small and negative
+α_tuning = -B_tuning*target_rate_tuning
+η_tuning = 5E-7
+γ_tuning = 20.0 # large
+weight_max_tuning = 0.99 / n_neurons
 
 weights_start_tuning = fill(initial_weight,n_neurons,n_neurons)
 weights_start_tuning[diagind(weights_start_tuning)] .= 0.0
+weights_initial_tuning = copy(weights_start_tuning)
 
+# `PopulationExpKernelExcitatory` describes the neurons themselves. It stores
+# the number of neurons, the exponential response-kernel timescale, and a label
+# used to identify the population when spikes and plasticity events are routed.
 population_tuning = H.PopulationExpKernelExcitatory(
     n_neurons,τ_kernel;label="tuning")
+
+# The plasticity object holds the STDP parameters, its pre- and postsynaptic
+# traces, and the fixed mask of structural zeros. It acts directly on the
+# recurrent weight matrix when spikes occur.
 plasticity_tuning = H.PlasticitySymmetricSTDP(
     η_tuning,B_tuning,α_tuning,α_tuning,
-    τ_plasticity,γ_tuning,weights_start_tuning;
+    τ_plasticity_low_abs_B,γ_tuning,weights_start_tuning;
     weight_min=weight_min,weight_max=weight_max_tuning)
+
+# `ConnectionWithWeights` joins the population to itself in `post <- pre`
+# order and attaches the plasticity rule. The connection retains and modifies
+# `weights_start_tuning` in place, which is why `weights_initial_tuning` was
+# copied before constructing it.
 connection_tuning = H.ConnectionWithWeights(
     population_tuning,weights_start_tuning,population_tuning;
     plasticity_rules=(plasticity_tuning,))
+
+# A connected population combines the intrinsic population, its vector of
+# constant external input rates, and its incoming connections. Supplying the
+# population together with its self-connection makes this network recurrent.
 connected_tuning = H.ConnectedPopulationExpKernel(
     population_tuning,fill(input_tuning,n_neurons),
     (connection_tuning,population_tuning));
 
 # The expected duration at the target rate determines the recording interval.
-# At most about 200 values from each recorder are used in the plots.
+# Deriving `Δt` from the expected simulation end keeps about 200 plotted points
+# even when the spike workload changes.
 
 recording_end_tuning =
     n_spikes/(n_neurons*target_rate_tuning)
 recording_interval_tuning =
     recording_end_tuning/n_recording_points
 
+# `RecorderPopulationRate` bins all population spikes into intervals of width
+# `Δt`, producing one population-rate trajectory.
 recorder_rate_tuning = H.RecorderPopulationRate(
     population_tuning,recording_end_tuning;
     Δt=recording_interval_tuning)
+
+# `WeightMatrixRecorder` snapshots every recurrent weight at the same interval,
+# allowing both individual synapse trajectories and their mean to be plotted.
 recorder_weight_tuning = H.WeightMatrixRecorder(
     connection_tuning.weights,recording_interval_tuning,
     recording_end_tuning)
+
+# Finally, `RecurrentNetworkExpKernel` packages the connected populations and
+# recorders. `dynamics_step!` advances this object from one network spike to the
+# next and dispatches the resulting state, plasticity, and recording updates.
 network_tuning = H.RecurrentNetworkExpKernel(
     (connected_tuning,),
     (recorder_rate_tuning,recorder_weight_tuning));
-
+## #src
 # ### Run the tuning-regime network
 
 Random.seed!(0)
-t_end_tuning = let t_now = 0.0
+simulation_tuning = @timed let t_now = 0.0
   H.reset!(network_tuning)
   for _ in 1:n_spikes
     t_now = H.dynamics_step!(t_now,network_tuning)
   end
   t_now
 end
+t_end_tuning = simulation_tuning.value
+elapsed_tuning = simulation_tuning.time
 
 rate_tuning = H.get_content(recorder_rate_tuning)
 weight_tuning = H.get_content(recorder_weight_tuning)
 weights_end_tuning = copy(connection_tuning.weights)
 
 println(
-    "Tuning-regime simulation completed after ",
-    round(t_end_tuning/3600;digits=2)," hours")
+    "Tuning-regime simulation completed.\n",
+    "Simulated network time (t_end): ",
+    round(t_end_tuning/3600;digits=2)," hours\n",
+    "Wall-clock simulation time: ",
+    round(elapsed_tuning;digits=2)," seconds (",
+    round(elapsed_tuning/60;digits=2)," minutes)")
 println("Recorded rate points: ",length(rate_tuning.times))
 println("Recorded weight points: ",length(weight_tuning.times))
+
+## #src
 
 # ### Population rate and mean recurrent weight
 
@@ -138,31 +184,40 @@ hline!(
 mean_weight_tuning =
     vec(mean(weight_tuning.weights;dims=(2,3)))
 plot_weight_tuning = plot(
-    weight_tuning.times./60,mean_weight_tuning;
-    label="mean recurrent weight",
-    color=:darkorange,
-    linewidth=2,
+    weight_tuning.times./60,
+    reshape(weight_tuning.weights,length(weight_tuning.times),:);
+    label=false,
+    color=:steelblue,
+    alpha=0.15,
+    linewidth=0.5,
     xlabel="time (min)",
     ylabel="weight",
-    ylim=(0,1.1maximum(mean_weight_tuning)),
-    legend=:bottomright);
+    ylim=(0,1.1maximum(weight_tuning.weights)),
+    legend=:bottomright)
+plot!(
+    plot_weight_tuning,weight_tuning.times./60,mean_weight_tuning;
+    label="mean recurrent weight",
+    color=:darkorange,
+    linewidth=3);
 plot(
     plot_rate_tuning,plot_weight_tuning;
     layout=(2,1),
     size=(800,600))
 
+## #src
+
 # ### Initial and final recurrent weights
 
 weight_clims_tuning = (
     0.0,
-    max(maximum(weights_start_tuning),maximum(weights_end_tuning)))
+    max(maximum(weights_initial_tuning),maximum(weights_end_tuning)))
 plot(
     heatmap(
-        weights_start_tuning;
+        weights_initial_tuning;
         ratio=1,
         xlabel="pre",
         ylabel="post",
-        color=:viridis,
+        color=cgrad([:white,:blue]),
         clims=weight_clims_tuning,
         title="initial weights"),
     heatmap(
@@ -170,34 +225,40 @@ plot(
         ratio=1,
         xlabel="pre",
         ylabel="post",
-        color=:viridis,
+        color=cgrad([:white,:blue]),
         clims=weight_clims_tuning,
         title="final weights");
     layout=(1,2),
     size=(900,400))
 
+## #src
+
 # ## Symmetric STDP in the rate-dominated regime
 
 # Making `B` substantially negative emphasizes the rate terms. The target rate
 # can now sit well above the external input, and excitation becomes distributed
-# more evenly while the recurrent matrix remains symmetric.
+# more evenly while the recurrent matrix remains symmetric. Because this
+# blanket regime is driven by rates rather than precise spike timing, its
+# plasticity timescale is increased to 1 second.
 
 input_blanket = 5.0
-target_rate_blanket = 30.0
-η_blanket = 4E-7
+target_rate_blanket = 15.0
 B_blanket = -0.6
-α_blanket = 18.0
-γ_blanket = 10.0
+α_blanket = -B_blanket*target_rate_blanket
+η_blanket = 1E-7
+τ_plasticity_blanket = 500E-3
+γ_blanket = 20.0
 weight_max_blanket = Inf
 
 weights_start_blanket = fill(initial_weight,n_neurons,n_neurons)
 weights_start_blanket[diagind(weights_start_blanket)] .= 0.0
+weights_initial_blanket = copy(weights_start_blanket)
 
 population_blanket = H.PopulationExpKernelExcitatory(
     n_neurons,τ_kernel;label="blanket")
 plasticity_blanket = H.PlasticitySymmetricSTDP(
     η_blanket,B_blanket,α_blanket,α_blanket,
-    τ_plasticity,γ_blanket,weights_start_blanket;
+    τ_plasticity_blanket,γ_blanket,weights_start_blanket;
     weight_min=weight_min,weight_max=weight_max_blanket)
 connection_blanket = H.ConnectionWithWeights(
     population_blanket,weights_start_blanket,population_blanket;
@@ -221,26 +282,36 @@ network_blanket = H.RecurrentNetworkExpKernel(
     (connected_blanket,),
     (recorder_rate_blanket,recorder_weight_blanket));
 
+## #src
+
 # ### Run the rate-dominated network
 
 Random.seed!(0)
-t_end_blanket = let t_now = 0.0
+simulation_blanket = @timed let t_now = 0.0
   H.reset!(network_blanket)
   for _ in 1:n_spikes
     t_now = H.dynamics_step!(t_now,network_blanket)
   end
   t_now
 end
+t_end_blanket = simulation_blanket.value
+elapsed_blanket = simulation_blanket.time
 
 rate_blanket = H.get_content(recorder_rate_blanket)
 weight_blanket = H.get_content(recorder_weight_blanket)
 weights_end_blanket = copy(connection_blanket.weights)
 
 println(
-    "Rate-dominated simulation completed after ",
-    round(t_end_blanket/3600;digits=2)," hours")
+    "Rate-dominated simulation completed.\n",
+    "Simulated network time (t_end): ",
+    round(t_end_blanket/3600;digits=2)," hours\n",
+    "Wall-clock simulation time: ",
+    round(elapsed_blanket;digits=2)," seconds (",
+    round(elapsed_blanket/60;digits=2)," minutes)")
 println("Recorded rate points: ",length(rate_blanket.times))
 println("Recorded weight points: ",length(weight_blanket.times))
+
+## #src
 
 # ### Population rate and mean recurrent weight
 
@@ -263,31 +334,40 @@ hline!(
 mean_weight_blanket =
     vec(mean(weight_blanket.weights;dims=(2,3)))
 plot_weight_blanket = plot(
-    weight_blanket.times./60,mean_weight_blanket;
-    label="mean recurrent weight",
-    color=:darkorange,
-    linewidth=2,
+    weight_blanket.times./60,
+    reshape(weight_blanket.weights,length(weight_blanket.times),:);
+    label=false,
+    color=:steelblue,
+    alpha=0.15,
+    linewidth=0.5,
     xlabel="time (min)",
     ylabel="weight",
-    ylim=(0,1.1maximum(mean_weight_blanket)),
-    legend=:bottomright);
+    ylim=(0,1.1maximum(weight_blanket.weights)),
+    legend=:bottomright)
+plot!(
+    plot_weight_blanket,weight_blanket.times./60,mean_weight_blanket;
+    label="mean recurrent weight",
+    color=:darkorange,
+    linewidth=3);
 plot(
     plot_rate_blanket,plot_weight_blanket;
     layout=(2,1),
     size=(800,600))
 
+## #src
+
 # ### Initial and final recurrent weights
 
 weight_clims_blanket = (
     0.0,
-    max(maximum(weights_start_blanket),maximum(weights_end_blanket)))
+    max(maximum(weights_initial_blanket),maximum(weights_end_blanket)))
 plot(
     heatmap(
-        weights_start_blanket;
+        weights_initial_blanket;
         ratio=1,
         xlabel="pre",
         ylabel="post",
-        color=:viridis,
+        color=cgrad([:white,:blue]),
         clims=weight_clims_blanket,
         title="initial weights"),
     heatmap(
@@ -295,34 +375,39 @@ plot(
         ratio=1,
         xlabel="pre",
         ylabel="post",
-        color=:viridis,
+        color=cgrad([:white,:blue]),
         clims=weight_clims_blanket,
         title="final weights");
     layout=(1,2),
     size=(900,400))
 
+## #src
+
 # ## Asymmetric STDP
 
 # The final network replaces the symmetric rule with asymmetric STDP. The
 # near-balanced learning window favors directional connections: reciprocal
-# symmetry is suppressed and many weights approach one of their bounds.
+# symmetry is suppressed and many weights approach one of their bounds. Like
+# the tuning regime, its small `abs(B)` uses the short 40 ms plasticity
+# timescale.
 
 input_asymmetric = 5.0
-target_rate_asymmetric = 5.01
-η_asymmetric = 1.76E-7
-B_asymmetric = -1/11
-α_asymmetric = 0.45545454545454545
+target_rate_asymmetric = 2.0 # not the final rate at all
+B_asymmetric = -1/10 # again, small and negative
+α_asymmetric = -B_asymmetric*target_rate_asymmetric
+η_asymmetric = 5E-7
 γ_asymmetric = 1.0
-weight_max_asymmetric = 0.025
+weight_max_asymmetric = 0.99 / n_neurons
 
 weights_start_asymmetric = fill(initial_weight,n_neurons,n_neurons)
 weights_start_asymmetric[diagind(weights_start_asymmetric)] .= 0.0
+weights_initial_asymmetric = copy(weights_start_asymmetric)
 
 population_asymmetric = H.PopulationExpKernelExcitatory(
     n_neurons,τ_kernel;label="asymmetric")
 plasticity_asymmetric = H.PlasticityAsymmetricSTDP(
     η_asymmetric,B_asymmetric,α_asymmetric,α_asymmetric,
-    τ_plasticity,γ_asymmetric,weights_start_asymmetric;
+    τ_plasticity_low_abs_B,γ_asymmetric,weights_start_asymmetric;
     weight_min=weight_min,weight_max=weight_max_asymmetric)
 connection_asymmetric = H.ConnectionWithWeights(
     population_asymmetric,weights_start_asymmetric,population_asymmetric;
@@ -346,26 +431,36 @@ network_asymmetric = H.RecurrentNetworkExpKernel(
     (connected_asymmetric,),
     (recorder_rate_asymmetric,recorder_weight_asymmetric));
 
+## #src
+
 # ### Run the asymmetric network
 
 Random.seed!(0)
-t_end_asymmetric = let t_now = 0.0
+simulation_asymmetric = @timed let t_now = 0.0
   H.reset!(network_asymmetric)
   for _ in 1:n_spikes
     t_now = H.dynamics_step!(t_now,network_asymmetric)
   end
   t_now
 end
+t_end_asymmetric = simulation_asymmetric.value
+elapsed_asymmetric = simulation_asymmetric.time
 
 rate_asymmetric = H.get_content(recorder_rate_asymmetric)
 weight_asymmetric = H.get_content(recorder_weight_asymmetric)
 weights_end_asymmetric = copy(connection_asymmetric.weights)
 
 println(
-    "Asymmetric simulation completed after ",
-    round(t_end_asymmetric/3600;digits=2)," hours")
+    "Asymmetric simulation completed.\n",
+    "Simulated network time (t_end): ",
+    round(t_end_asymmetric/3600;digits=2)," hours\n",
+    "Wall-clock simulation time: ",
+    round(elapsed_asymmetric;digits=2)," seconds (",
+    round(elapsed_asymmetric/60;digits=2)," minutes)")
 println("Recorded rate points: ",length(rate_asymmetric.times))
 println("Recorded weight points: ",length(weight_asymmetric.times))
+
+## #src
 
 # ### Population rate and mean recurrent weight
 
@@ -388,31 +483,41 @@ hline!(
 mean_weight_asymmetric =
     vec(mean(weight_asymmetric.weights;dims=(2,3)))
 plot_weight_asymmetric = plot(
-    weight_asymmetric.times./60,mean_weight_asymmetric;
-    label="mean recurrent weight",
-    color=:darkorange,
-    linewidth=2,
+    weight_asymmetric.times./60,
+    reshape(weight_asymmetric.weights,length(weight_asymmetric.times),:);
+    label=false,
+    color=:steelblue,
+    alpha=0.15,
+    linewidth=0.5,
     xlabel="time (min)",
     ylabel="weight",
-    ylim=(0,1.1maximum(mean_weight_asymmetric)),
-    legend=:bottomright);
+    ylim=(0,1.1maximum(weight_asymmetric.weights)),
+    legend=:bottomright)
+plot!(
+    plot_weight_asymmetric,weight_asymmetric.times./60,
+    mean_weight_asymmetric;
+    label="mean recurrent weight",
+    color=:darkorange,
+    linewidth=3);
 plot(
     plot_rate_asymmetric,plot_weight_asymmetric;
     layout=(2,1),
     size=(800,600))
 
+## #src
+
 # ### Initial and final recurrent weights
 
 weight_clims_asymmetric = (
     0.0,
-    max(maximum(weights_start_asymmetric),maximum(weights_end_asymmetric)))
+    max(maximum(weights_initial_asymmetric),maximum(weights_end_asymmetric)))
 plot(
     heatmap(
-        weights_start_asymmetric;
+        weights_initial_asymmetric;
         ratio=1,
         xlabel="pre",
         ylabel="post",
-        color=:viridis,
+        color=cgrad([:white,:blue]),
         clims=weight_clims_asymmetric,
         title="initial weights"),
     heatmap(
@@ -420,8 +525,11 @@ plot(
         ratio=1,
         xlabel="pre",
         ylabel="post",
-        color=:viridis,
+        color=cgrad([:white,:blue]),
         clims=weight_clims_asymmetric,
         title="final weights");
     layout=(1,2),
     size=(900,400))
+
+## #src
+println("ALL DONE!") #src
