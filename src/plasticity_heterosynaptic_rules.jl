@@ -18,7 +18,8 @@ struct HeterosynapticDivisive <: HeterosynapticMethod end
 
 """
     PlasticityHeterosynapticNormalization(
-        weight_sum_limit::Real,
+        weight_sum_target::Real,
+        tolerance::Real,
         Δt::Real,
         weights::Matrix{Float64};
         target::HeterosynapticTarget,
@@ -27,12 +28,13 @@ struct HeterosynapticDivisive <: HeterosynapticMethod end
         weight_max::Real=Inf)
 
 Construct a rule that periodically restricts sums of incoming rows or outgoing
-columns. A group is changed only when its sum exceeds `weight_sum_limit`.
+columns. A group is changed only when its sum exceeds
+`weight_sum_target + tolerance`.
 
 `HeterosynapticSubtractive()` subtracts the excess equally from all plastic
 weights in the group. `HeterosynapticDivisive()` scales all plastic weights in
-the group by `weight_sum_limit/sum`. Each changed weight is finally restricted
-to `[weight_min,weight_max]`, so the resulting sum may differ from the limit.
+the group by `weight_sum_target/sum`. Each changed weight is finally restricted
+to `[weight_min,weight_max]`, so the resulting sum may differ from the target.
 
 Positions that are exactly zero at construction are not changed and do not
 contribute to the sums. Use [`refresh_mask!`](@ref) to update the plastic
@@ -42,7 +44,8 @@ synapses. The first update occurs at the first plasticity callback at or after
 mutable struct PlasticityHeterosynapticNormalization{
     HT<:HeterosynapticTarget,
     HM<:HeterosynapticMethod} <: AbstractPlasticityRule
-  weight_sum_limit::Float64
+  weight_sum_target::Float64
+  tolerance::Float64
   Δt::Float64
   weight_min::Float64
   weight_max::Float64
@@ -76,15 +79,19 @@ end
 end
 
 function PlasticityHeterosynapticNormalization(
-    weight_sum_limit::Real,
+    weight_sum_target::Real,
+    tolerance::Real,
     Δt::Real,
     weights::Matrix{Float64};
     target::HeterosynapticTarget,
     method::HeterosynapticMethod,
     weight_min::Real=0.0,
     weight_max::Real=Inf)
-  if !(isfinite(weight_sum_limit) && weight_sum_limit > 0)
-    throw(ArgumentError("weight_sum_limit must be finite and positive"))
+  if !(isfinite(weight_sum_target) && weight_sum_target > 0)
+    throw(ArgumentError("weight_sum_target must be finite and positive"))
+  end
+  if !(isfinite(tolerance) && tolerance > 0)
+    throw(ArgumentError("tolerance must be finite and positive"))
   end
   if !(isfinite(Δt) && Δt > 0)
     throw(ArgumentError("Δt must be finite and positive"))
@@ -99,7 +106,7 @@ function PlasticityHeterosynapticNormalization(
   active_counts = zeros(Int,n_groups)
   groups_to_normalize = fill(false,n_groups)
   plast = PlasticityHeterosynapticNormalization(
-    Float64(weight_sum_limit),Float64(Δt),
+    Float64(weight_sum_target),Float64(tolerance),Float64(Δt),
     Float64(weight_min),Float64(weight_max),target,method,0.0,
     zero_weight_mask,group_workspace,active_counts,groups_to_normalize)
   refresh_mask!(plast,weights)
@@ -143,15 +150,16 @@ function _prepare_heterosynaptic_correction!(
     workspace::Vector{Float64},
     groups_to_normalize::Vector{Bool},
     active_counts::Vector{Int},
-    weight_sum_limit::Float64,
+    weight_sum_target::Float64,
+    tolerance::Float64,
     ::HeterosynapticSubtractive)
   @inbounds for group_idx in eachindex(workspace)
     weight_sum = workspace[group_idx]
-    normalize = weight_sum > weight_sum_limit
+    normalize = weight_sum > weight_sum_target+tolerance
     groups_to_normalize[group_idx] = normalize
     if normalize
       workspace[group_idx] =
-        (weight_sum-weight_sum_limit)/active_counts[group_idx]
+        (weight_sum-weight_sum_target)/active_counts[group_idx]
     else
       workspace[group_idx] = 0.0
     end
@@ -163,14 +171,15 @@ function _prepare_heterosynaptic_correction!(
     workspace::Vector{Float64},
     groups_to_normalize::Vector{Bool},
     ::Vector{Int},
-    weight_sum_limit::Float64,
+    weight_sum_target::Float64,
+    tolerance::Float64,
     ::HeterosynapticDivisive)
   @inbounds for group_idx in eachindex(workspace)
     weight_sum = workspace[group_idx]
-    normalize = weight_sum > weight_sum_limit
+    normalize = weight_sum > weight_sum_target+tolerance
     groups_to_normalize[group_idx] = normalize
     if normalize
-      workspace[group_idx] = weight_sum_limit/weight_sum
+      workspace[group_idx] = weight_sum_target/weight_sum
     else
       workspace[group_idx] = 1.0
     end
@@ -198,7 +207,8 @@ function _normalize_heterosynaptic!(
     workspace::Vector{Float64},
     active_counts::Vector{Int},
     groups_to_normalize::Vector{Bool},
-    weight_sum_limit::Float64,
+    weight_sum_target::Float64,
+    tolerance::Float64,
     weight_min::Float64,
     weight_max::Float64,
     ::HeterosynapticIncoming,
@@ -213,7 +223,8 @@ function _normalize_heterosynaptic!(
   end
 
   _prepare_heterosynaptic_correction!(
-    workspace,groups_to_normalize,active_counts,weight_sum_limit,method)
+    workspace,groups_to_normalize,active_counts,
+    weight_sum_target,tolerance,method)
 
   any_group_to_normalize = false
   @inbounds for post_idx in eachindex(groups_to_normalize)
@@ -246,7 +257,8 @@ function _normalize_heterosynaptic!(
     workspace::Vector{Float64},
     active_counts::Vector{Int},
     groups_to_normalize::Vector{Bool},
-    weight_sum_limit::Float64,
+    weight_sum_target::Float64,
+    tolerance::Float64,
     weight_min::Float64,
     weight_max::Float64,
     ::HeterosynapticOutgoing,
@@ -262,7 +274,8 @@ function _normalize_heterosynaptic!(
   end
 
   _prepare_heterosynaptic_correction!(
-    workspace,groups_to_normalize,active_counts,weight_sum_limit,method)
+    workspace,groups_to_normalize,active_counts,
+    weight_sum_target,tolerance,method)
 
   any_group_to_normalize = false
   @inbounds for pre_idx in eachindex(groups_to_normalize)
@@ -309,7 +322,7 @@ function apply_plasticity!(
   _normalize_heterosynaptic!(
     weights,plast.zero_weight_mask,
     plast.group_workspace,plast.active_counts,plast.groups_to_normalize,
-    plast.weight_sum_limit,plast.weight_min,plast.weight_max,
+    plast.weight_sum_target,plast.tolerance,plast.weight_min,plast.weight_max,
     plast.target,plast.method)
   return nothing
 end

@@ -13,12 +13,13 @@ end
     @testset "Construction and validation" begin
         weights = [0.0 1.0 2.0; 3.0 0.0 4.0]
         plast = HPN_HET.PlasticityHeterosynapticNormalization(
-            5.0,2.0,weights;
+            5.0,0.5,2.0,weights;
             target=HPN_HET.HeterosynapticIncoming(),
             method=HPN_HET.HeterosynapticSubtractive(),
             weight_min=-1.0,weight_max=3.0)
 
-        @test plast.weight_sum_limit == 5.0
+        @test plast.weight_sum_target == 5.0
+        @test plast.tolerance == 0.5
         @test plast.Δt == 2.0
         @test plast.weight_min == -1.0
         @test plast.weight_max == 3.0
@@ -28,7 +29,7 @@ end
         @test length(plast.group_workspace) == 2
 
         outgoing = HPN_HET.PlasticityHeterosynapticNormalization(
-            5.0,2.0,weights;
+            5.0,0.5,2.0,weights;
             target=HPN_HET.HeterosynapticOutgoing(),
             method=HPN_HET.HeterosynapticDivisive())
         @test outgoing.active_counts == [1,1,2]
@@ -38,28 +39,34 @@ end
 
         for bad_limit in (0.0,-1.0,Inf,NaN)
             @test_throws ArgumentError HPN_HET.PlasticityHeterosynapticNormalization(
-                bad_limit,1.0,weights;
+                bad_limit,0.5,1.0,weights;
+                target=HPN_HET.HeterosynapticIncoming(),
+                method=HPN_HET.HeterosynapticSubtractive())
+        end
+        for bad_tolerance in (0.0,-1.0,Inf,NaN)
+            @test_throws ArgumentError HPN_HET.PlasticityHeterosynapticNormalization(
+                1.0,bad_tolerance,1.0,weights;
                 target=HPN_HET.HeterosynapticIncoming(),
                 method=HPN_HET.HeterosynapticSubtractive())
         end
         for bad_dt in (0.0,-1.0,Inf,NaN)
             @test_throws ArgumentError HPN_HET.PlasticityHeterosynapticNormalization(
-                1.0,bad_dt,weights;
+                1.0,0.5,bad_dt,weights;
                 target=HPN_HET.HeterosynapticIncoming(),
                 method=HPN_HET.HeterosynapticSubtractive())
         end
         @test_throws ArgumentError HPN_HET.PlasticityHeterosynapticNormalization(
-            1.0,1.0,weights;
+            1.0,0.5,1.0,weights;
             target=HPN_HET.HeterosynapticIncoming(),
             method=HPN_HET.HeterosynapticSubtractive(),
             weight_min=2.0,weight_max=1.0)
 
         empty_rows = HPN_HET.PlasticityHeterosynapticNormalization(
-            1.0,1.0,zeros(0,3);
+            1.0,0.5,1.0,zeros(0,3);
             target=HPN_HET.HeterosynapticIncoming(),
             method=HPN_HET.HeterosynapticSubtractive())
         empty_columns = HPN_HET.PlasticityHeterosynapticNormalization(
-            1.0,1.0,zeros(2,0);
+            1.0,0.5,1.0,zeros(2,0);
             target=HPN_HET.HeterosynapticOutgoing(),
             method=HPN_HET.HeterosynapticDivisive())
         @test isempty(empty_rows.group_workspace)
@@ -69,7 +76,7 @@ end
     @testset "Incoming subtractive normalization and bounds" begin
         weights = [0.0 4.0 4.0; 1.0 2.0 2.0; 2.0 3.0 1.0]
         plast = HPN_HET.PlasticityHeterosynapticNormalization(
-            5.0,1.0,weights;
+            5.0,0.5,1.0,weights;
             target=HPN_HET.HeterosynapticIncoming(),
             method=HPN_HET.HeterosynapticSubtractive(),
             weight_min=0.0,weight_max=10.0)
@@ -86,7 +93,7 @@ end
 
         bounded_weights = [0.1 10.0]
         bounded = HPN_HET.PlasticityHeterosynapticNormalization(
-            1.0,1.0,bounded_weights;
+            1.0,0.5,1.0,bounded_weights;
             target=HPN_HET.HeterosynapticIncoming(),
             method=HPN_HET.HeterosynapticSubtractive(),
             weight_min=0.0,weight_max=4.0)
@@ -101,7 +108,7 @@ end
     @testset "Incoming divisive normalization" begin
         weights = [0.0 2.0 6.0; 1.0 2.0 2.0]
         plast = HPN_HET.PlasticityHeterosynapticNormalization(
-            4.0,1.0,weights;
+            4.0,0.5,1.0,weights;
             target=HPN_HET.HeterosynapticIncoming(),
             method=HPN_HET.HeterosynapticDivisive())
         connection = HPN_HET.ConnectionWithWeights(
@@ -112,10 +119,30 @@ end
         @test weights[2,:] ≈ [0.8,1.6,1.6]
     end
 
+    @testset "Tolerance controls triggering, not normalization target" begin
+        for method in (
+                HPN_HET.HeterosynapticSubtractive(),
+                HPN_HET.HeterosynapticDivisive())
+            weights = reshape([2.75,2.75],1,2)
+            plast = HPN_HET.PlasticityHeterosynapticNormalization(
+                5.0,0.5,1.0,weights;
+                target=HPN_HET.HeterosynapticIncoming(),method=method)
+            connection = HPN_HET.ConnectionWithWeights(
+                weights,:post,:pre,(plast,),true)
+
+            HPN_HET.apply_plasticity!(plast,connection,1.0,:pre,1)
+            @test sum(weights) == 5.5
+
+            weights .= 2.8
+            HPN_HET.apply_plasticity!(plast,connection,2.0,:pre,1)
+            @test isapprox(sum(weights),5.0;atol=1e-12)
+        end
+    end
+
     @testset "Outgoing subtractive normalization" begin
         weights = [0.0 1.0 4.0; 8.0 2.0 2.0]
         plast = HPN_HET.PlasticityHeterosynapticNormalization(
-            5.0,1.0,weights;
+            5.0,0.5,1.0,weights;
             target=HPN_HET.HeterosynapticOutgoing(),
             method=HPN_HET.HeterosynapticSubtractive())
         connection = HPN_HET.ConnectionWithWeights(
@@ -130,7 +157,7 @@ end
     @testset "Outgoing divisive normalization and upper bound" begin
         weights = [0.0 1.0 8.0; 8.0 2.0 4.0]
         plast = HPN_HET.PlasticityHeterosynapticNormalization(
-            4.0,1.0,weights;
+            4.0,0.5,1.0,weights;
             target=HPN_HET.HeterosynapticOutgoing(),
             method=HPN_HET.HeterosynapticDivisive(),
             weight_min=0.0,weight_max=2.0)
@@ -147,7 +174,7 @@ end
     @testset "Timing, reset, mask refresh, and dimensions" begin
         weights = [0.0 4.0; 4.0 4.0]
         plast = HPN_HET.PlasticityHeterosynapticNormalization(
-            4.0,2.0,weights;
+            4.0,0.5,2.0,weights;
             target=HPN_HET.HeterosynapticIncoming(),
             method=HPN_HET.HeterosynapticDivisive())
         connection = HPN_HET.ConnectionWithWeights(
@@ -197,7 +224,7 @@ end
                 weights = fill(1.0,8,8)
                 weights[diagind(weights)] .= 0.0
                 plast = HPN_HET.PlasticityHeterosynapticNormalization(
-                    4.0,1.0,weights;target=target,method=method)
+                    4.0,0.5,1.0,weights;target=target,method=method)
                 connection = HPN_HET.ConnectionWithWeights(
                     weights,:post,:pre,(plast,),true)
 

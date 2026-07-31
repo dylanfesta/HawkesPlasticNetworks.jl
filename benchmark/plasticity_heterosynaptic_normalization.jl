@@ -12,6 +12,7 @@ const VIOLATION_CASES = (:all,:none)
 
 # Model parameters
 const WEIGHT_SUM_LIMIT_FRACTION = 0.5
+const WEIGHT_SUM_TOLERANCE_FRACTION = 0.05
 const WEIGHT_MIN = 0.0
 const WEIGHT_MAX = Inf
 const TARGETS = (
@@ -35,6 +36,7 @@ struct HeterosynapticBenchmarkState{
     active_counts::Vector{Int}
     groups_to_normalize::Vector{Bool}
     weight_sum_limit::Float64
+    tolerance::Float64
     weight_min::Float64
     weight_max::Float64
     target::HT
@@ -100,9 +102,11 @@ function make_state(
     groups_to_normalize = fill(false,n_groups)
     weight_sum_limit =
         WEIGHT_SUM_LIMIT_FRACTION*INITIAL_WEIGHT*group_width(weights,target)
+    tolerance =
+        WEIGHT_SUM_TOLERANCE_FRACTION*INITIAL_WEIGHT*group_width(weights,target)
     return HeterosynapticBenchmarkState(
         weights,mask,workspace,active_counts,groups_to_normalize,
-        weight_sum_limit,WEIGHT_MIN,WEIGHT_MAX,target,method)
+        weight_sum_limit,tolerance,WEIGHT_MIN,WEIGHT_MAX,target,method)
 end
 
 function reset_weights!(state::HeterosynapticBenchmarkState,value::Float64)
@@ -121,7 +125,7 @@ function prepare_correction!(
             HT,HPN.HeterosynapticSubtractive}) where HT
     @inbounds for idx in eachindex(state.workspace)
         weight_sum = state.workspace[idx]
-        normalize = weight_sum > state.weight_sum_limit
+        normalize = weight_sum > state.weight_sum_limit+state.tolerance
         state.groups_to_normalize[idx] = normalize
         if normalize
             state.workspace[idx] =
@@ -138,7 +142,7 @@ function prepare_correction!(
             HT,HPN.HeterosynapticDivisive}) where HT
     @inbounds for idx in eachindex(state.workspace)
         weight_sum = state.workspace[idx]
-        normalize = weight_sum > state.weight_sum_limit
+        normalize = weight_sum > state.weight_sum_limit+state.tolerance
         state.groups_to_normalize[idx] = normalize
         if normalize
             state.workspace[idx] = state.weight_sum_limit/weight_sum
@@ -269,6 +273,7 @@ function current_normalize!(state::HeterosynapticBenchmarkState)
     HPN._normalize_heterosynaptic!(
         state.weights,state.mask,state.workspace,state.active_counts,
         state.groups_to_normalize,state.weight_sum_limit,
+        state.tolerance,
         state.weight_min,state.weight_max,state.target,state.method)
     return nothing
 end
