@@ -10,6 +10,7 @@ abstract type HeterosynapticTarget end
 
 struct HeterosynapticIncoming <: HeterosynapticTarget end
 struct HeterosynapticOutgoing <: HeterosynapticTarget end
+struct HeterosynapticBoth <: HeterosynapticTarget end
 
 abstract type HeterosynapticMethod end
 
@@ -27,8 +28,9 @@ struct HeterosynapticDivisive <: HeterosynapticMethod end
         weight_min::Real=0.0,
         weight_max::Real=Inf)
 
-Construct a rule that periodically restricts sums of incoming rows or outgoing
-columns. A group is changed only when its sum exceeds
+Construct a rule that periodically restricts sums of incoming rows, outgoing
+columns, or both. `HeterosynapticBoth()` normalizes incoming rows first and
+outgoing columns second. A group is changed only when its sum exceeds
 `weight_sum_target + tolerance`.
 
 `HeterosynapticSubtractive()` subtracts the excess equally from all plastic
@@ -68,6 +70,11 @@ end
   return size(weights,2)
 end
 
+@inline function _heterosynaptic_group_count(
+    weights::AbstractMatrix,::HeterosynapticBoth)
+  return max(size(weights,1),size(weights,2))
+end
+
 @inline function _heterosynaptic_group_index(
     post_idx::Int,::Int,::HeterosynapticIncoming)
   return post_idx
@@ -76,6 +83,26 @@ end
 @inline function _heterosynaptic_group_index(
     ::Int,pre_idx::Int,::HeterosynapticOutgoing)
   return pre_idx
+end
+
+function _count_heterosynaptic_active!(
+    counts::Vector{Int},mask::Matrix{Bool},target::HeterosynapticTarget)
+  fill!(counts,0)
+  @inbounds for pre_idx in axes(mask,2)
+    for post_idx in axes(mask,1)
+      if !mask[post_idx,pre_idx]
+        group_idx = _heterosynaptic_group_index(post_idx,pre_idx,target)
+        counts[group_idx] += 1
+      end
+    end
+  end
+  return nothing
+end
+
+function _count_heterosynaptic_active!(
+    counts::Vector{Int},mask::Matrix{Bool},::HeterosynapticBoth)
+  _count_heterosynaptic_active!(counts,mask,HeterosynapticIncoming())
+  return nothing
 end
 
 function PlasticityHeterosynapticNormalization(
@@ -120,22 +147,15 @@ function refresh_mask!(
     throw(DimensionMismatch("weights and zero-weight mask must have the same size"))
   end
 
-  fill!(plast.active_counts,0)
   fill!(plast.group_workspace,0.0)
   fill!(plast.groups_to_normalize,false)
-  target = plast.target
   mask = plast.zero_weight_mask
-  counts = plast.active_counts
   @inbounds for pre_idx in axes(weights,2)
     for post_idx in axes(weights,1)
-      masked = iszero(weights[post_idx,pre_idx])
-      mask[post_idx,pre_idx] = masked
-      if !masked
-        group_idx = _heterosynaptic_group_index(post_idx,pre_idx,target)
-        counts[group_idx] += 1
-      end
+      mask[post_idx,pre_idx] = iszero(weights[post_idx,pre_idx])
     end
   end
+  _count_heterosynaptic_active!(plast.active_counts,mask,plast.target)
   return nothing
 end
 
@@ -263,6 +283,7 @@ function _normalize_heterosynaptic!(
     weight_max::Float64,
     ::HeterosynapticOutgoing,
     method::HeterosynapticMethod)
+  fill!(workspace,0.0)
   @inbounds for pre_idx in axes(weights,2)
     weight_sum = 0.0
     for post_idx in axes(weights,1)
@@ -300,6 +321,32 @@ function _normalize_heterosynaptic!(
       end
     end
   end
+  return nothing
+end
+
+function _normalize_heterosynaptic!(
+    weights::Matrix{Float64},
+    mask::Matrix{Bool},
+    workspace::Vector{Float64},
+    active_counts::Vector{Int},
+    groups_to_normalize::Vector{Bool},
+    weight_sum_target::Float64,
+    tolerance::Float64,
+    weight_min::Float64,
+    weight_max::Float64,
+    ::HeterosynapticBoth,
+    method::HeterosynapticMethod)
+  incoming = HeterosynapticIncoming()
+  _count_heterosynaptic_active!(active_counts,mask,incoming)
+  _normalize_heterosynaptic!(
+    weights,mask,workspace,active_counts,groups_to_normalize,
+    weight_sum_target,tolerance,weight_min,weight_max,incoming,method)
+
+  outgoing = HeterosynapticOutgoing()
+  _count_heterosynaptic_active!(active_counts,mask,outgoing)
+  _normalize_heterosynaptic!(
+    weights,mask,workspace,active_counts,groups_to_normalize,
+    weight_sum_target,tolerance,weight_min,weight_max,outgoing,method)
   return nothing
 end
 

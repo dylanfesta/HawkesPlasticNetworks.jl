@@ -37,6 +37,12 @@ end
         @test outgoing.weight_min == 0.0
         @test outgoing.weight_max == Inf
 
+        both = HPN_HET.PlasticityHeterosynapticNormalization(
+            5.0,0.5,2.0,weights;
+            target=HPN_HET.HeterosynapticBoth(),
+            method=HPN_HET.HeterosynapticDivisive())
+        @test length(both.group_workspace) == 3
+
         for bad_limit in (0.0,-1.0,Inf,NaN)
             @test_throws ArgumentError HPN_HET.PlasticityHeterosynapticNormalization(
                 bad_limit,0.5,1.0,weights;
@@ -171,6 +177,39 @@ end
         @test sum(weights[:,1]) != 4.0
     end
 
+    @testset "Both normalizes incoming then outgoing" begin
+        initial_weights = [0.0 4.0 3.0; 6.0 2.0 5.0]
+        for method in (
+                HPN_HET.HeterosynapticSubtractive(),
+                HPN_HET.HeterosynapticDivisive())
+            expected_weights = copy(initial_weights)
+            incoming = HPN_HET.PlasticityHeterosynapticNormalization(
+                5.0,0.25,1.0,expected_weights;
+                target=HPN_HET.HeterosynapticIncoming(),method=method)
+            outgoing = HPN_HET.PlasticityHeterosynapticNormalization(
+                5.0,0.25,1.0,expected_weights;
+                target=HPN_HET.HeterosynapticOutgoing(),method=method)
+            expected_connection = HPN_HET.ConnectionWithWeights(
+                expected_weights,:post,:pre,(incoming,outgoing),true)
+
+            weights = copy(initial_weights)
+            both = HPN_HET.PlasticityHeterosynapticNormalization(
+                5.0,0.25,1.0,weights;
+                target=HPN_HET.HeterosynapticBoth(),method=method)
+            connection = HPN_HET.ConnectionWithWeights(
+                weights,:post,:pre,(both,),true)
+
+            HPN_HET.apply_plasticity!(
+                incoming,expected_connection,1.0,:other,1)
+            HPN_HET.apply_plasticity!(
+                outgoing,expected_connection,1.0,:other,1)
+            @test HPN_HET.apply_plasticity!(
+                both,connection,1.0,:other,1) === nothing
+            @test isapprox(weights,expected_weights;atol=1e-12)
+            @test weights[1,1] == 0.0
+        end
+    end
+
     @testset "Timing, reset, mask refresh, and dimensions" begin
         weights = [0.0 4.0; 4.0 4.0]
         plast = HPN_HET.PlasticityHeterosynapticNormalization(
@@ -217,7 +256,8 @@ end
     @testset "Hot paths allocate no memory" begin
         for target in (
                 HPN_HET.HeterosynapticIncoming(),
-                HPN_HET.HeterosynapticOutgoing())
+                HPN_HET.HeterosynapticOutgoing(),
+                HPN_HET.HeterosynapticBoth())
             for method in (
                     HPN_HET.HeterosynapticSubtractive(),
                     HPN_HET.HeterosynapticDivisive())
