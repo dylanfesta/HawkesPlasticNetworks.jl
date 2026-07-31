@@ -25,5 +25,12 @@ internal weight-update kernels, run:
 julia --project=benchmark benchmark/plasticity_typed_kernels.jl
 ```
 
+To compare the previous generic heterosynaptic normalization kernel, the
+target-specialized improvement, and the current package implementation, run:
+
+```sh
+julia --project=benchmark benchmark/plasticity_heterosynaptic_normalization.jl
+```
+
 Workload sizes, model parameters, initial values, and BenchmarkTools settings
 are constants at the top of the benchmark file.

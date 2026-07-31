@@ -144,7 +144,10 @@ function plasticity_off!(connection::AbstractConnectionWithWeights)
   return nothing
 end
 
+# this is enough to include the plasticity rules
+
 include("plasticity_rules.jl")
+include("plasticity_heterosynaptic_rules.jl")
 
 
 struct PopulationExpKernelExcitatory{Tr<:Trace}  <: AbstractPopulation

@@ -6,6 +6,7 @@ mutable struct TestPlasticityRule <: HawkesPlasticNetworks.AbstractPlasticityRul
 end
 
 include("plasticity_asymmetric_stdp.jl")
+include("plasticity_heterosynaptic_rules.jl")
 include("plasticity_homeostatic_scaling.jl")
 include("plasticity_symmetric_stdp.jl")
 include("plasticity_vogels_sprekeler.jl")
