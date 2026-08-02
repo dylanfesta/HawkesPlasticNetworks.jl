@@ -330,8 +330,9 @@ if !any(steady_state_idxs_sym)
 end
 mean_dw_dt_sym = mean(dw_dt_sym[steady_state_idxs_sym]);
 
-# The positive and negative trace coefficients again sum to `B_sym`, but
-# symmetric STDP applies this combination for both spike directions. Its
+# The positive and negative trace coefficients again sum to `B_sym`,
+# symmetric STDP applies this combination for both spike directions, but includes 
+# a 0.5 normalization factor.  Its
 # independent-Poisson expectation is therefore
 #
 # ```math
@@ -339,12 +340,12 @@ mean_dw_dt_sym = mean(dw_dt_sym[steady_state_idxs_sym]);
 # = \eta\left(
 #     \alpha_{\mathrm{pre}}r_{\mathrm{pre}}
 #     + \alpha_{\mathrm{post}}r_{\mathrm{post}}
-#     + 2B r_{\mathrm{pre}}r_{\mathrm{post}}\right).
+#     + B r_{\mathrm{pre}}r_{\mathrm{post}}\right).
 # ```
 expected_dw_dt_sym = η_sym*(
     αpre_sym*rate_pre_sym +
     αpost_sym*rate_post_sym +
-    2B_sym*rate_pre_sym*rate_post_sym)
+    B_sym*rate_pre_sym*rate_post_sym)
 
 println(
     "Average measured symmetric-STDP dw/dt after warmup: ",

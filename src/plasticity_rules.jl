@@ -505,8 +505,8 @@ function apply_plasticity!(
   if pre_fired
     decay_plus = trace_decay(t_fire,plast.trace_post_plus)
     decay_minus = trace_decay(t_fire,plast.trace_post_minus)
-    trace_scale_plus = ((plast.B+1.0)/2.0)*decay_plus
-    trace_scale_minus = ((plast.B-1.0)/2.0)*decay_minus
+    trace_scale_plus = ((plast.B+1.0)/4.0)*decay_plus
+    trace_scale_minus = ((plast.B-1.0)/4.0)*decay_minus
     _apply_stdp_two_traces!(
       weights,mask,plast.trace_post_plus.val,plast.trace_post_minus.val,
       neuron_fire_idx,η,plast.αpre,trace_scale_plus,trace_scale_minus,
@@ -516,8 +516,8 @@ function apply_plasticity!(
   if post_fired
     decay_plus = trace_decay(t_fire,plast.trace_pre_plus)
     decay_minus = trace_decay(t_fire,plast.trace_pre_minus)
-    trace_scale_plus = ((plast.B+1.0)/2.0)*decay_plus
-    trace_scale_minus = ((plast.B-1.0)/2.0)*decay_minus
+    trace_scale_plus = ((plast.B+1.0)/4.0)*decay_plus
+    trace_scale_minus = ((plast.B-1.0)/4.0)*decay_minus
     _apply_stdp_two_traces!(
       transpose(weights),transpose(mask),
       plast.trace_pre_plus.val,plast.trace_pre_minus.val,

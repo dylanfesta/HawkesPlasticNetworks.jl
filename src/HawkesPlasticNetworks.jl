@@ -35,7 +35,6 @@ struct NoPlasticity <: AbstractPlasticityRule end
 @inline rand_label() = Symbol(randstring(3))
 
 # Now include different sub-components
-include("analytics.jl")
 include("weight_matrix_utilities.jl")
 include("traces.jl")
 
@@ -144,12 +143,6 @@ function plasticity_off!(connection::AbstractConnectionWithWeights)
   return nothing
 end
 
-# this is enough to include the plasticity rules
-
-include("plasticity_rules.jl")
-include("plasticity_heterosynaptic_rules.jl")
-
-
 struct PopulationExpKernelExcitatory{Tr<:Trace}  <: AbstractPopulation
   label::Symbol
   n::Int64
@@ -198,14 +191,11 @@ function PopulationExpKernelInhibitory(n::Integer,τ_kernel::Real;
   return PopulationExpKernelInhibitory(label,n,trace,spike_proposals)
 end
 
-include("recorders.jl")
-
 function reset!(ps::Union{PopulationExpKernelExcitatory,PopulationExpKernelInhibitory})
   reset!(ps.trace)
   fill!(ps.spike_proposals,Inf)
   return nothing
 end
-
 
 function set_initial_rates!(pop::Union{PopulationExpKernelExcitatory,PopulationExpKernelInhibitory},
     rates::Union{Vector{<:Real},Real})
@@ -218,6 +208,14 @@ function set_initial_rates!(pop::Union{PopulationExpKernelExcitatory,PopulationE
   pop.trace.val .= _rates
   return nothing
 end
+
+
+
+# Include more components here
+include("plasticity_rules.jl")
+include("plasticity_heterosynaptic_rules.jl")
+include("analytics.jl")
+include("recorders.jl")
 
 
 struct ConnectedPopulationExpKernel{N,
