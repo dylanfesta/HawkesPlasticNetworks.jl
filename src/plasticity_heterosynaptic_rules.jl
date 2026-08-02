@@ -123,9 +123,7 @@ function PlasticityHeterosynapticNormalization(
   if !(isfinite(Δt) && Δt > 0)
     throw(ArgumentError("Δt must be finite and positive"))
   end
-  if !(weight_min <= weight_max)
-    throw(ArgumentError("weight_min must not exceed weight_max"))
-  end
+  _validate_plasticity_weight_bounds(weight_min,weight_max)
 
   zero_weight_mask = Matrix{Bool}(undef,size(weights))
   n_groups = _heterosynaptic_group_count(weights,target)

@@ -39,6 +39,17 @@ include("weight_matrix_utilities.jl")
 include("traces.jl")
 
 
+"""
+    ConnectionWithWeights(post, weights, pre; plasticity_rules=(), is_plastic=nothing)
+
+Create an interacting `post <- pre` connection. `weights` stores finite,
+nonnegative magnitudes; the presynaptic population type determines whether the
+signal is excitatory or inhibitory. Structural zeros are allowed.
+
+The matrix is retained by reference. Direct mutations and custom plasticity
+rules must preserve finite, nonnegative values so that the thinning bound
+remains valid.
+"""
 struct ConnectionWithWeights{
     PR<:Tuple{Vararg{AbstractPlasticityRule}}} <: AbstractConnectionWithWeights
   weights::Matrix{Float64}
@@ -55,6 +66,14 @@ function _connection_with_weights(
     pre_pop_label::Symbol,
     plasticity_rules::PR,
     is_plastic::Bool) where {PR<:Tuple{Vararg{AbstractPlasticityRule}}}
+  if connection_type === ConnectionWithWeights
+    if !all(isfinite,weights)
+      throw(ArgumentError("connection weights must be finite"))
+    end
+    if !all(weight -> weight >= 0.0,weights)
+      throw(ArgumentError("connection weights must be nonnegative"))
+    end
+  end
   return connection_type(
     weights,post_pop_label,pre_pop_label,plasticity_rules,Ref(is_plastic))
 end
@@ -64,6 +83,10 @@ function _connection_with_weights(
     pop_post::AbstractPopulation,weights::Matrix{Float64},pop_pre::AbstractPopulation;
     plasticity_rules::Tuple{Vararg{AbstractPlasticityRule}}=Tuple{}(),
     is_plastic::Union{Nothing,Bool}=nothing)
+  if size(weights) != (nneurons(pop_post),nneurons(pop_pre))
+    throw(DimensionMismatch(
+      "connection weights must have size (n_post, n_pre)"))
+  end
   _is_plastic = something(is_plastic, ! isempty(plasticity_rules))
   return _connection_with_weights(
     connection_type,weights,pop_post.label,pop_pre.label,
@@ -153,6 +176,18 @@ nneurons(ps::PopulationExpKernelExcitatory) = ps.n
 
 function PopulationExpKernelExcitatory(n::Integer,trace::Trace;
     label::Union{String,Nothing}=nothing)
+  if n < 1
+    throw(ArgumentError("population size must be positive"))
+  end
+  if length(trace) != n
+    throw(DimensionMismatch("trace length must match population size"))
+  end
+  if !all(isfinite,trace.val)
+    throw(ArgumentError("trace values must be finite and nonnegative"))
+  end
+  if !all(rate -> rate >= 0.0,trace.val)
+    throw(ArgumentError("trace values must be finite and nonnegative"))
+  end
   label = something(label,rand_label()) 
   label = Symbol(label)
   spike_proposals = fill(Inf,n)
@@ -160,6 +195,9 @@ function PopulationExpKernelExcitatory(n::Integer,trace::Trace;
 end
 function PopulationExpKernelExcitatory(n::Integer,τ_kernel::Real;
     label::Union{String,Nothing}=nothing)
+  if n < 1
+    throw(ArgumentError("population size must be positive"))
+  end
   trace = Trace(τ_kernel,n)
   label = something(label,rand_label())
   label = Symbol(label)
@@ -177,6 +215,18 @@ nneurons(ps::PopulationExpKernelInhibitory) = ps.n
 
 function PopulationExpKernelInhibitory(n::Integer,trace::Trace;
     label::Union{String,Nothing}=nothing)
+  if n < 1
+    throw(ArgumentError("population size must be positive"))
+  end
+  if length(trace) != n
+    throw(DimensionMismatch("trace length must match population size"))
+  end
+  if !all(isfinite,trace.val)
+    throw(ArgumentError("trace values must be finite and nonnegative"))
+  end
+  if !all(rate -> rate >= 0.0,trace.val)
+    throw(ArgumentError("trace values must be finite and nonnegative"))
+  end
   label = something(label,rand_label()) 
   label = Symbol(label)
   spike_proposals = fill(Inf,n)
@@ -184,6 +234,9 @@ function PopulationExpKernelInhibitory(n::Integer,trace::Trace;
 end
 function PopulationExpKernelInhibitory(n::Integer,τ_kernel::Real;
     label::Union{String,Nothing}=nothing)
+  if n < 1
+    throw(ArgumentError("population size must be positive"))
+  end
   trace = Trace(τ_kernel,n)
   label = something(label,rand_label())
   label = Symbol(label)
@@ -199,13 +252,27 @@ end
 
 function set_initial_rates!(pop::Union{PopulationExpKernelExcitatory,PopulationExpKernelInhibitory},
     rates::Union{Vector{<:Real},Real})
-  _rates = if isa(rates,Real)
-    fill(rates,nneurons(pop))
-  else
-    typeassert(rates,Vector{<:Real})
+  if isa(rates,Real)
+    if !isfinite(rates)
+      throw(ArgumentError("initial rates must be finite and nonnegative"))
+    end
+    if !(rates >= 0)
+      throw(ArgumentError("initial rates must be finite and nonnegative"))
+    end
+    fill!(pop.trace.val,rates)
+    return nothing
   end
-  @assert nneurons(pop) == length(_rates) "Dimensions wrong!"
-  pop.trace.val .= _rates
+  typeassert(rates,Vector{<:Real})
+  if nneurons(pop) != length(rates)
+    throw(DimensionMismatch("initial rates must match population size"))
+  end
+  if !all(isfinite,rates)
+    throw(ArgumentError("initial rates must be finite and nonnegative"))
+  end
+  if !all(rate -> rate >= 0,rates)
+    throw(ArgumentError("initial rates must be finite and nonnegative"))
+  end
+  pop.trace.val .= rates
   return nothing
 end
 
@@ -226,6 +293,43 @@ struct ConnectedPopulationExpKernel{N,
   connections::TC
   pre_populations::TP
   input::Vector{Float64} # input for fixed external currents 
+  function ConnectedPopulationExpKernel(
+      population::PS,connections::TC,pre_populations::TP,
+      input::Vector{Float64}) where {
+      N,PS<:Union{PopulationExpKernelExcitatory,PopulationExpKernelInhibitory},
+      TC<:NTuple{N,AbstractConnection},TP<:NTuple{N,AbstractPopulation}}
+    if length(input) != nneurons(population)
+      throw(DimensionMismatch("input length must match postsynaptic population"))
+    end
+    if !all(isfinite,input)
+      throw(ArgumentError("external input must be finite"))
+    end
+    for idx in eachindex(connections,pre_populations)
+      connection = connections[idx]
+      pre_population = pre_populations[idx]
+      if connection.post_pop_label != population.label
+        throw(ArgumentError("connection postsynaptic label does not match population"))
+      end
+      if connection.pre_pop_label != pre_population.label
+        throw(ArgumentError("connection presynaptic label does not match population"))
+      end
+      if size(connection.weights) !=
+          (nneurons(population),nneurons(pre_population))
+        throw(DimensionMismatch(
+          "connection weights must have size (n_post, n_pre)"))
+      end
+      if connection isa ConnectionWithWeights
+        if !all(isfinite,connection.weights)
+          throw(ArgumentError("connection weights must be finite"))
+        end
+        if !all(weight -> weight >= 0.0,connection.weights)
+          throw(ArgumentError("connection weights must be nonnegative"))
+        end
+      end
+    end
+    return new{N,PS,TC,TP}(
+      population,connections,pre_populations,input)
+  end
 end
 
 # more convenient constructor, with connection arguments such as 
@@ -293,17 +397,56 @@ function compute_rates!(r_alloc::Vector{Float64},t_now::Real,conn_pop::Connected
   copy!(r_alloc,conn_pop.input)
   accumulate_signal_iterator!(r_alloc,t_now,conn_pop.population,
     conn_pop.connections,conn_pop.pre_populations)
+  @inbounds for idx in eachindex(r_alloc)
+    r_alloc[idx] = max(r_alloc[idx],0.0)
+  end
   return nothing
 end
 
-# The upper limit is the same as the default, except it floors 
-# the result at zero.
+# Excitatory signals decay from their current positive value, while inhibitory
+# signals decay toward zero and can therefore make the real rate increase.
+# Omitting inhibition gives a bound valid until the next network event.
 function compute_rates_upper!(r_alloc::Vector{Float64},t_now::Real,
     conn_pop::ConnectedPopulationExpKernel)
   copy!(r_alloc,conn_pop.input)
-  accumulate_signal_iterator!(r_alloc,t_now,conn_pop.population,conn_pop.connections,conn_pop.pre_populations)
-  _eps = eps(Float64)
-  r_alloc .= max.(r_alloc,_eps)
+  accumulate_signal_upper_iterator!(
+    r_alloc,t_now,conn_pop.population,
+    conn_pop.connections,conn_pop.pre_populations)
+  @inbounds for idx in eachindex(r_alloc)
+    r_alloc[idx] = max(r_alloc[idx],eps(Float64))
+  end
+  return nothing
+end
+
+function accumulate_signal_upper_iterator!(rates::Vector{Float64},t_now::Real,
+    ps_post::AbstractPopulation,connections,pre_states)
+  accumulate_signal_upper!(
+    rates,t_now,ps_post,first(connections),first(pre_states))
+  accumulate_signal_upper_iterator!(
+    rates,t_now,ps_post,Base.tail(connections),Base.tail(pre_states))
+  return nothing
+end
+
+function accumulate_signal_upper_iterator!(::Vector{Float64},::Real,
+    ::AbstractPopulation,::Tuple{},::Tuple{})
+  return nothing
+end
+
+function accumulate_signal_upper!(rates::Vector{Float64},t_now::Real,
+    ps_post::AbstractPopulation,connection::ConnectionWithWeights,
+    pop_pre::PopulationExpKernelExcitatory)
+  accumulate_signal!(rates,t_now,ps_post,connection,pop_pre)
+  return nothing
+end
+
+function accumulate_signal_upper!(::Vector{Float64},::Real,
+    ::AbstractPopulation,::ConnectionWithWeights,
+    ::PopulationExpKernelInhibitory)
+  return nothing
+end
+
+function accumulate_signal_upper!(::Vector{Float64},::Real,
+    ::AbstractPopulation,::ConnectionNonInteracting,::AbstractPopulation)
   return nothing
 end
 

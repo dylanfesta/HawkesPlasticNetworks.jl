@@ -56,6 +56,57 @@ end
         @test pop_inh_from_trace.trace.τ == 0.75
     end
 
+    @testset "Dynamics construction validation" begin
+        @test_throws ArgumentError HawkesPlasticNetworks.Trace(0.0,1)
+        @test_throws ArgumentError HawkesPlasticNetworks.Trace(Inf,1)
+        @test_throws ArgumentError HawkesPlasticNetworks.Trace(1.0,-1)
+        @test_throws ArgumentError HawkesPlasticNetworks.PopulationExpKernelExcitatory(
+            0,1.0)
+        @test_throws DimensionMismatch HawkesPlasticNetworks.PopulationExpKernelExcitatory(
+            2,HawkesPlasticNetworks.Trace(1.0,1))
+
+        invalid_trace = HawkesPlasticNetworks.Trace(1.0,1)
+        invalid_trace.val[1] = -1.0
+        @test_throws ArgumentError HawkesPlasticNetworks.PopulationExpKernelInhibitory(
+            1,invalid_trace)
+
+        post = HawkesPlasticNetworks.PopulationExpKernelExcitatory(
+            1,1.0;label="post")
+        pre = HawkesPlasticNetworks.PopulationExpKernelExcitatory(
+            1,1.0;label="pre")
+        zero_connection = HawkesPlasticNetworks.ConnectionWithWeights(
+            post,zeros(1,1),pre)
+        @test zero_connection.weights == zeros(1,1)
+        for invalid_weight in (-1.0,Inf,NaN)
+            @test_throws ArgumentError HawkesPlasticNetworks.ConnectionWithWeights(
+                post,fill(invalid_weight,1,1),pre)
+        end
+        @test_throws DimensionMismatch HawkesPlasticNetworks.ConnectionWithWeights(
+            post,zeros(2,1),pre)
+
+        @test_throws DimensionMismatch HawkesPlasticNetworks.ConnectedPopulationExpKernel(
+            post,Float64[],(zero_connection,pre))
+        @test_throws ArgumentError HawkesPlasticNetworks.ConnectedPopulationExpKernel(
+            post,[Inf],(zero_connection,pre))
+
+        wrong_label_connection = HawkesPlasticNetworks.ConnectionWithWeights(
+            zeros(1,1),:wrong,:pre,(),false)
+        @test_throws ArgumentError HawkesPlasticNetworks.ConnectedPopulationExpKernel(
+            post,[1.0],(wrong_label_connection,pre))
+
+        wrong_size_connection = HawkesPlasticNetworks.ConnectionWithWeights(
+            zeros(2,1),:post,:pre,(),false)
+        @test_throws DimensionMismatch HawkesPlasticNetworks.ConnectedPopulationExpKernel(
+            post,[1.0],(wrong_size_connection,pre))
+
+        @test_throws ArgumentError HawkesPlasticNetworks.set_initial_rates!(
+            post,-1.0)
+        @test_throws ArgumentError HawkesPlasticNetworks.set_initial_rates!(
+            post,[NaN])
+        @test_throws DimensionMismatch HawkesPlasticNetworks.set_initial_rates!(
+            post,[1.0,2.0])
+    end
+
     @testset "RecorderPopulationRate construction" begin
         rec = HawkesPlasticNetworks.RecorderPopulationRate(
             :exc, 2, 25.0; Tstart=5.0, Δt=10.0)
@@ -242,6 +293,62 @@ end
         @test rates ≈ [1.0]
     end
 
+    @testset "Excitation-only thinning bound remains valid as inhibition decays" begin
+        post = HawkesPlasticNetworks.PopulationExpKernelExcitatory(
+            1,1.0;label="post_bound")
+        pre_exc = HawkesPlasticNetworks.PopulationExpKernelExcitatory(
+            1,1.0;label="exc_bound")
+        pre_inh = HawkesPlasticNetworks.PopulationExpKernelInhibitory(
+            1,0.25;label="inh_bound")
+        connection_exc = HawkesPlasticNetworks.ConnectionWithWeights(
+            post,fill(0.6,1,1),pre_exc)
+        connection_inh = HawkesPlasticNetworks.ConnectionWithWeights(
+            post,fill(0.4,1,1),pre_inh)
+        connected = HawkesPlasticNetworks.ConnectedPopulationExpKernel(
+            post,[0.5],
+            (connection_exc,pre_exc),(connection_inh,pre_inh))
+        HawkesPlasticNetworks.set_initial_rates!(pre_exc,2.0)
+        HawkesPlasticNetworks.set_initial_rates!(pre_inh,3.0)
+
+        rates = zeros(1)
+        upper = zeros(1)
+        HawkesPlasticNetworks.compute_rates!(rates,0.0,connected)
+        initial_rate = only(rates)
+        @test initial_rate ≈ 0.5
+        HawkesPlasticNetworks.compute_rates_upper!(upper,0.0,connected)
+        @test only(upper) ≈ 1.7
+
+        HawkesPlasticNetworks.compute_rates!(rates,0.25,connected)
+        @test only(rates) > initial_rate
+
+        for bound_time in range(0.0,1.0;length=5)
+            HawkesPlasticNetworks.compute_rates_upper!(
+                upper,bound_time,connected)
+            bound = only(upper)
+            for rate_time in range(bound_time,2.0;length=21)
+                HawkesPlasticNetworks.compute_rates!(
+                    rates,rate_time,connected)
+                @test only(rates) <= bound + 10eps(bound)
+            end
+        end
+
+        HawkesPlasticNetworks.compute_rates!(rates,0.0,connected)
+        HawkesPlasticNetworks.compute_rates_upper!(upper,0.0,connected)
+        real_allocations = @allocated HawkesPlasticNetworks.compute_rates!(
+            rates,0.0,connected)
+        upper_allocations = @allocated HawkesPlasticNetworks.compute_rates_upper!(
+            upper,0.0,connected)
+        @test real_allocations == 0
+        @test upper_allocations == 0
+
+        inhibited = HawkesPlasticNetworks.ConnectedPopulationExpKernel(
+            post,[-0.5],(connection_inh,pre_inh))
+        HawkesPlasticNetworks.compute_rates!(rates,0.0,inhibited)
+        @test rates == [0.0]
+        HawkesPlasticNetworks.compute_rates_upper!(upper,0.0,inhibited)
+        @test upper == [eps(Float64)]
+    end
+
     @testset "Non-interacting weighted connections skip dynamics" begin
         pop_post = HawkesPlasticNetworks.PopulationExpKernelExcitatory(
             1,2.0;label="post")
@@ -279,7 +386,7 @@ end
         weights = fill(1.0,1,1)
         plast = HawkesPlasticNetworks.PlasticityAsymmetricSTDP(
             0.2,0.0,0.1,0.3,2.0,2.0,weights;
-            weight_min=-10.0,weight_max=10.0)
+            weight_min=0.0,weight_max=10.0)
         connection = HawkesPlasticNetworks.ConnectionNonInteracting(
             weights,:post,:pre,(plast,),true)
         post = HawkesPlasticNetworks.PopulationExpKernelExcitatory(
@@ -351,12 +458,15 @@ end
             2,trace;label="post")
         pre = HawkesPlasticNetworks.PopulationExpKernelExcitatory(
             2,HawkesPlasticNetworks.Trace(20.0,2);label="pre")
+        fixed_pre = HawkesPlasticNetworks.PopulationExpKernelExcitatory(
+            2,HawkesPlasticNetworks.Trace(20.0,2);label="fixed")
         plastic_connection = HawkesPlasticNetworks.ConnectionWithWeights(
             zeros(2,2),:post,:pre,(rule_a,rule_b),true)
         fixed_connection = HawkesPlasticNetworks.ConnectionWithWeights(
             zeros(2,2),:post,:fixed,(rule_a,),false)
         connected_post = HawkesPlasticNetworks.ConnectedPopulationExpKernel(
-            post,zeros(2),(plastic_connection,pre),(fixed_connection,pre))
+            post,zeros(2),
+            (plastic_connection,pre),(fixed_connection,fixed_pre))
 
         @test !ismutabletype(typeof(plastic_connection))
         @test plastic_connection.is_plastic[]

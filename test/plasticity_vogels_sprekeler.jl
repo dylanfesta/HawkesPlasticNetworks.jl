@@ -1,4 +1,9 @@
 @testset "PlasticityVogelsSprekeler" begin
+    @testset "Weight bounds are nonnegative" begin
+        @test_throws ArgumentError HPN.PlasticityVogelsSprekeler(
+            0.2,0.5,2.0,ones(1,1);weight_min=-1.0,weight_max=1.0)
+    end
+
     @testset "Target term is applied on presynaptic spikes" begin
         η = 0.2
         r_target = 0.5

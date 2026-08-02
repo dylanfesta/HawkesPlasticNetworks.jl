@@ -10,6 +10,15 @@ mutable struct Trace{V<:AbstractVector,R<:Real} <: AbstractTrace
   τ::R
   t_last::R
   function Trace(τ::Real,n::Integer)
+    if !isfinite(τ)
+      throw(ArgumentError("τ must be finite and positive"))
+    end
+    if !(τ > 0)
+      throw(ArgumentError("τ must be finite and positive"))
+    end
+    if n < 0
+      throw(ArgumentError("trace length must be nonnegative"))
+    end
     val = fill(0.0,n)
     t_last = 0.0
     return new{typeof(val),typeof(t_last)}(val,τ,t_last)

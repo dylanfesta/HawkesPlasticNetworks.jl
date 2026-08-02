@@ -14,6 +14,8 @@ const HPN_STDHS = HawkesPlasticNetworks
     @test plast.weight_max == 1.0
     @test plast.trace_post.val == zeros(2)
     @test plast.zero_weight_mask == iszero.(weights)
+    @test_throws ArgumentError HPN_STDHS.PlasticityHomeostaticScaling(
+        1e-6,5.0,1,20.0,weights;weight_min=-1.0,weight_max=1.0)
 end
 
 @testset "PlasticityHomeostaticScaling signed update" begin

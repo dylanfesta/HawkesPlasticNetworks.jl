@@ -16,12 +16,12 @@ end
             5.0,0.5,2.0,weights;
             target=HPN_HET.HeterosynapticIncoming(),
             method=HPN_HET.HeterosynapticSubtractive(),
-            weight_min=-1.0,weight_max=3.0)
+            weight_min=0.0,weight_max=3.0)
 
         @test plast.weight_sum_target == 5.0
         @test plast.tolerance == 0.5
         @test plast.Δt == 2.0
-        @test plast.weight_min == -1.0
+        @test plast.weight_min == 0.0
         @test plast.weight_max == 3.0
         @test plast.t_last == 0.0
         @test plast.zero_weight_mask == Bool[1 0 0; 0 1 0]
@@ -66,6 +66,11 @@ end
             target=HPN_HET.HeterosynapticIncoming(),
             method=HPN_HET.HeterosynapticSubtractive(),
             weight_min=2.0,weight_max=1.0)
+        @test_throws ArgumentError HPN_HET.PlasticityHeterosynapticNormalization(
+            1.0,0.5,1.0,weights;
+            target=HPN_HET.HeterosynapticIncoming(),
+            method=HPN_HET.HeterosynapticSubtractive(),
+            weight_min=-1.0,weight_max=1.0)
 
         empty_rows = HPN_HET.PlasticityHeterosynapticNormalization(
             1.0,0.5,1.0,zeros(0,3);

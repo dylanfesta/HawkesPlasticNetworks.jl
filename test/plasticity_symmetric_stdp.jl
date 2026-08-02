@@ -22,6 +22,9 @@
         @test_throws ArgumentError HPN.PlasticitySymmetricSTDP(
             0.1,0.0,0.0,0.0,2.0,1.5,weights;
             weight_min=2.0,weight_max=1.0)
+        @test_throws ArgumentError HPN.PlasticitySymmetricSTDP(
+            0.1,0.0,0.0,0.0,2.0,1.5,weights;
+            weight_min=-1.0,weight_max=1.0)
     end
 
     @testset "Pre and post updates combine both traces" begin

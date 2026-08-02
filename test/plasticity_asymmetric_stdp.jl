@@ -94,6 +94,9 @@ end
         @test_throws ArgumentError HPN.PlasticityAsymmetricSTDP(
             0.1,0.0,0.0,0.0,1.0,1.0,weights;
             weight_min=2.0,weight_max=1.0)
+        @test_throws ArgumentError HPN.PlasticityAsymmetricSTDP(
+            0.1,0.0,0.0,0.0,1.0,1.0,weights;
+            weight_min=-1.0,weight_max=1.0)
 
         empty_plast = HPN.PlasticityAsymmetricSTDP(
             0.1,0.0,0.0,0.0,1.0,1.0,zeros(0,3))
@@ -106,7 +109,7 @@ end
         weights = fill(1.0,2,3)
         plast = HPN.PlasticityAsymmetricSTDP(
             0.2,0.0,0.1,0.3,2.0,2.0,weights;
-            weight_min=-10.0,weight_max=10.0)
+            weight_min=0.0,weight_max=10.0)
         connection = HPN.ConnectionWithWeights(
             weights,:post,:pre,(plast,),true)
 
@@ -179,7 +182,7 @@ end
         weights = fill(1.0,3,3)
         plast = HPN.PlasticityAsymmetricSTDP(
             0.1,0.2,0.4,-0.3,2.0,1.5,weights;
-            weight_min=-10.0,weight_max=10.0)
+            weight_min=0.0,weight_max=10.0)
         connection = HPN.ConnectionWithWeights(
             weights,:self,:self,(plast,),true)
         plast.trace_pre_plus.val .= [1.0,2.0,3.0]
@@ -219,7 +222,7 @@ end
         weights = [0.0 1.0; 2.0 3.0]
         plast = HPN.PlasticityAsymmetricSTDP(
             1.0,1.0,0.0,1.0,1.0,1.0,weights;
-            weight_min=-10.0,weight_max=10.0)
+            weight_min=0.0,weight_max=10.0)
         connection = HPN.ConnectionWithWeights(
             weights,:post,:pre,(plast,),true)
 

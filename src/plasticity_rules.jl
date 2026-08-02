@@ -24,6 +24,22 @@ end
 
 abstract type AbstractPlasticitySTDP <: AbstractPlasticityRule end
 
+function _validate_plasticity_weight_bounds(weight_min::Real,weight_max::Real)
+  if !isfinite(weight_min)
+    throw(ArgumentError("weight_min must be finite and nonnegative"))
+  end
+  if !(weight_min >= 0)
+    throw(ArgumentError("weight_min must be finite and nonnegative"))
+  end
+  if isnan(weight_max)
+    throw(ArgumentError("weight_max must not be NaN"))
+  end
+  if !(weight_min <= weight_max)
+    throw(ArgumentError("weight_min must not exceed weight_max"))
+  end
+  return nothing
+end
+
 """
     refresh_mask!(plasticity, weights)
 
@@ -164,9 +180,7 @@ function PlasticityVogelsSprekeler(
   if !(r_target > 0)
     throw(ArgumentError("r_target must be positive"))
   end
-  if !(weight_min <= weight_max)
-    throw(ArgumentError("weight_min must not exceed weight_max"))
-  end
+  _validate_plasticity_weight_bounds(weight_min,weight_max)
   n_post,n_pre = size(weights)
   zero_weight_mask = Matrix{Bool}(undef,n_post,n_pre)
   @inbounds for idx in eachindex(weights,zero_weight_mask)
@@ -299,9 +313,7 @@ function PlasticityAsymmetricSTDP(
   if !(η >= 0)
     throw(ArgumentError("η must be non-negative"))
   end
-  if !(weight_min <= weight_max)
-    throw(ArgumentError("weight_min must not exceed weight_max"))
-  end
+  _validate_plasticity_weight_bounds(weight_min,weight_max)
 
   n_post,n_pre = size(weights)
   zero_weight_mask = Matrix{Bool}(undef,n_post,n_pre)
@@ -451,9 +463,7 @@ function PlasticitySymmetricSTDP(
   if !(γ > 0)
     throw(ArgumentError("γ must be positive"))
   end
-  if !(weight_min <= weight_max)
-    throw(ArgumentError("weight_min must not exceed weight_max"))
-  end
+  _validate_plasticity_weight_bounds(weight_min,weight_max)
 
   n_post,n_pre = size(weights)
   zero_weight_mask = Matrix{Bool}(undef,n_post,n_pre)
@@ -589,9 +599,7 @@ function PlasticityHomeostaticScaling(
   if !(s == 1 || s == -1)
     throw(ArgumentError("s must be 1 or -1"))
   end
-  if !(weight_min <= weight_max)
-    throw(ArgumentError("weight_min must not exceed weight_max"))
-  end
+  _validate_plasticity_weight_bounds(weight_min,weight_max)
   n_post,n_pre = size(weights)
   zero_weight_mask = Matrix{Bool}(undef,n_post,n_pre)
   @inbounds for idx in eachindex(weights,zero_weight_mask)
