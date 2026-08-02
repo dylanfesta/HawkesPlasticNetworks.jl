@@ -38,8 +38,8 @@
         decay_plus = exp(-1.0/2.0)
         decay_minus = exp(-1.0/4.0)
         expected_pre = 1.0 + 0.2*0.1 +
-            0.2*0.75*decay_plus*4.0 +
-            0.2*(-0.25)*decay_minus*8.0
+            0.2*0.375*decay_plus*4.0 +
+            0.2*(-0.125)*decay_minus*8.0
 
         @test HPN.apply_plasticity!(
             plast,connection,2.0,:pre,2) === nothing
@@ -53,8 +53,8 @@
         plast.trace_pre_plus.t_last = 2.0
         plast.trace_pre_minus.t_last = 2.0
         expected_post = 1.0 + 0.2*(-0.1) +
-            0.2*0.75*decay_plus*7.0 +
-            0.2*(-0.25)*decay_minus*8.0
+            0.2*0.375*decay_plus*7.0 +
+            0.2*(-0.125)*decay_minus*8.0
 
         @test HPN.apply_plasticity!(
             plast,connection,3.0,:post,1) === nothing
@@ -91,7 +91,7 @@
 
         HPN.apply_plasticity!(plast,connection,0.0,:self,1)
 
-        @test isapprox(weights[1,1],1.0 + 0.05*(6.0-8.0+2.0-4.0))
+        @test isapprox(weights[1,1],1.0 + 0.025*(6.0-8.0+2.0-4.0))
         @test plast.trace_pre_plus.val == [2.5,3.0]
         @test plast.trace_pre_minus.val == [4.25,5.0]
         @test plast.trace_post_plus.val == [6.5,7.0]
