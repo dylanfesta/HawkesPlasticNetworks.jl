@@ -11,6 +11,7 @@ include("plasticity_homeostatic_scaling.jl")
 include("plasticity_symmetric_stdp.jl")
 include("plasticity_vogels_sprekeler.jl")
 include("weight_matrix_utilities.jl")
+include("analytics.jl")
 
 function HawkesPlasticNetworks.apply_plasticity!(
         rule::TestPlasticityRule,

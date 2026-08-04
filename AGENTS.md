@@ -31,6 +31,21 @@ This is an early-stage Julia package for spiking network simulations.
 
 When dealing with connectivity and recursion, use a "post <- pre" ordering, meaning that the w_ij element of the weight matrix is the weight from neuron j (pre) to neuron i (post). Functions also follow this same convention, with arguments referring to postsynaptic populations first, then presynaptic populations.
 
+## Documentation
+
+- Keep executable documentation examples in `docs/literate/` and write them as
+  Literate.jl source files that can be run from top to bottom.
+- Put executable setup, validation, or cleanup code that should not appear in
+  the generated documentation between `## #src` marker lines. Keep code visible
+  when it is part of the explanation readers should follow.
+- Suppress uninformative output in generated documentation. In particular, add
+  a trailing semicolon to the final line of a code block before the next text
+  block unless displaying that value is useful to the example.
+- Keep prose close to the code it explains, and make examples deterministic by
+  seeding or explicitly passing an RNG whenever randomness affects the result.
+- When changing package behavior used by an example, update the corresponding
+  Literate source rather than editing generated documentation.
+
 ## Testing
 
 - Use the standard Julia package test flow:

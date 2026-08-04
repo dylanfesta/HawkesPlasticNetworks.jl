@@ -27,7 +27,17 @@ Literate.markdown(
     flavor=Literate.DocumenterFlavor(),
 )
 Literate.markdown(
+    joinpath(docs_dir,"literate","05_structured_inhibition_motifs.jl"),
+    generated_dir;
+    flavor=Literate.DocumenterFlavor(),
+)
+Literate.markdown(
     joinpath(docs_dir,"literate","z01_test_plasticity.jl"),
+    generated_dir;
+    flavor=Literate.DocumenterFlavor(),
+)
+Literate.markdown(
+    joinpath(docs_dir,"literate","z02_test_plasticity_motifs.jl"),
     generated_dir;
     flavor=Literate.DocumenterFlavor(),
 )
@@ -54,8 +64,12 @@ makedocs(;
                 "generated/03_homeostatic_stabilization.md",
             "Excitatory-only networks" =>
                 "generated/04_excitatory_only_networks.md",
+            "Structured inhibition in two-neuron motifs" =>
+                "generated/05_structured_inhibition_motifs.md",
             "Plasticity rule tests" =>
                 "generated/z01_test_plasticity.md",
+            "Plasticity predictions in two-neuron motifs" =>
+                "generated/z02_test_plasticity_motifs.md",
         ],
     ],
 )

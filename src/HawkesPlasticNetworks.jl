@@ -392,7 +392,12 @@ function reset_iterator!(::Tuple{})
 end
 
 
-# This is the function that computes the total input at t_now, from all possible sources 
+# For neuron i, compute the rectified instantaneous rate
+#
+#   lambda_i(t) = max(0, input_i + excitation_i(t) - inhibition_i(t)).
+#
+# Connection weights and traces are nonnegative; the presynaptic population
+# type determines whether a connection contributes with a plus or minus sign.
 function compute_rates!(r_alloc::Vector{Float64},t_now::Real,conn_pop::ConnectedPopulationExpKernel)
   copy!(r_alloc,conn_pop.input)
   accumulate_signal_iterator!(r_alloc,t_now,conn_pop.population,
@@ -403,9 +408,20 @@ function compute_rates!(r_alloc::Vector{Float64},t_now::Real,conn_pop::Connected
   return nothing
 end
 
-# Excitatory signals decay from their current positive value, while inhibitory
-# signals decay toward zero and can therefore make the real rate increase.
-# Omitting inhibition gives a bound valid until the next network event.
+# Between network events, every trace only decays. For any future s >= t,
+# excitation_i(s) <= excitation_i(t), while -inhibition_i(s) <= 0. Therefore
+#
+#   lambda_i(s) <= max(0, input_i + excitation_i(t)).
+#
+# This bound keeps the constant input because all traces eventually vanish, and
+# deliberately omits inhibition because a negative contribution becomes less
+# negative as it decays. The instantaneous rate itself is consequently unsafe:
+# it can increase without a spike when inhibition decays.
+#
+# If all incoming traces had one common time constant, the exact bound would be
+# max(0, input_i, the unrectified current rate). The package permits different
+# time constants, for which the rate can overshoot both its current value and
+# its limiting input, so the excitation-only bound is the simple general bound.
 function compute_rates_upper!(r_alloc::Vector{Float64},t_now::Real,
     conn_pop::ConnectedPopulationExpKernel)
   copy!(r_alloc,conn_pop.input)
@@ -413,6 +429,8 @@ function compute_rates_upper!(r_alloc::Vector{Float64},t_now::Real,
     r_alloc,t_now,conn_pop.population,
     conn_pop.connections,conn_pop.pre_populations)
   @inbounds for idx in eachindex(r_alloc)
+    # Keep the total proposal rate positive so thinning never divides by zero.
+    # This numerical floor remains an upper bound when the expression is <= 0.
     r_alloc[idx] = max(r_alloc[idx],eps(Float64))
   end
   return nothing
@@ -435,6 +453,7 @@ end
 function accumulate_signal_upper!(rates::Vector{Float64},t_now::Real,
     ps_post::AbstractPopulation,connection::ConnectionWithWeights,
     pop_pre::PopulationExpKernelExcitatory)
+  # Current excitation is nonnegative and can only decrease before an event.
   accumulate_signal!(rates,t_now,ps_post,connection,pop_pre)
   return nothing
 end
@@ -442,6 +461,8 @@ end
 function accumulate_signal_upper!(::Vector{Float64},::Real,
     ::AbstractPopulation,::ConnectionWithWeights,
     ::PopulationExpKernelInhibitory)
+  # Intentionally omit inhibition: its magnitude decays, so subtracting its
+  # current value could put the proposal rate below a later real rate.
   return nothing
 end
 
@@ -494,7 +515,13 @@ function accumulate_signal!(::Vector{Float64},::Real,
   return nothing
 end
 
-# multivariate thinning algorithm. From Y. Chen, 2016
+# Multivariate thinning algorithm. At each iteration R_up bounds the summed
+# rate at every later time, provided no network event occurs. A rejected
+# proposal is not an event: time advances to the proposal and the
+# excitation-only bound is recomputed there. It is no larger than the previous
+# bound because its constant input is unchanged and its excitation has decayed.
+# An accepted spike ends this search; the outer simulation applies the event
+# (and any plasticity) before computing new bounds. From Y. Chen, 2016.
 function compute_next_spike(t_now::Real,
     connected_pop::ConnectedPopulationExpKernel;Tmax::Real=100.0)
   t_start = t_now

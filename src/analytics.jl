@@ -109,12 +109,18 @@ end
 
 
 """
-    analytic_wei_with_motifs_1D(
+    analytic_wei_two_neuron_motif_fixed_rhin(
         αpre::Real,αpost::Real,bias::Real,
         M10::Real,M01::Real,wie::Real,he::Real,rinh::Real)
 
-Analytic solution for a two neruon motif with one excitatory and one inhibitory neuron.
-Where the inhibitory neuron is kept at a fixed rate by ad-hoc varying input.
+Analytic solution for a two-neuron motif with one excitatory and one inhibitory
+neuron, where the inhibitory neuron is kept at a fixed rate by varying its
+external input.
+
+`M10` and `M01` are signed motif coefficients. In particular, `M10` is
+negative for an inhibitory presynaptic population. The learned I→E weight is a
+nonnegative magnitude, so the signed first-order drift contains
+`M10*w_ei*rinh`.
 
 This is the toy-model proposed in Festa,Cusseddu,Gjorgjieva 2026
 
@@ -122,10 +128,10 @@ This is the toy-model proposed in Festa,Cusseddu,Gjorgjieva 2026
 function analytic_wei_two_neuron_motif_fixed_rhin(
   αpre::Real,αpost::Real,bias::Real,
     M10::Real,M01::Real,wie::Real,he::Real,rinh::Real)
-  somefactor = αpost+bias*rinh+M01*wie
-  _up = αpre*rinh + he*somefactor
-  _down =  rinh*(somefactor+M10)
-  return max(0.0,_up/_down)
+  rate_and_reciprocal = αpost+bias*rinh+M01*wie
+  numerator = αpre*rinh + he*rate_and_reciprocal
+  denominator = rinh*(rate_and_reciprocal-M10)
+  return max(0.0,numerator/denominator)
 end
 
 function analytic_wei_two_neuron_motif_fixed_rhin(
@@ -138,6 +144,182 @@ function analytic_wei_two_neuron_motif_fixed_rhin(
   return analytic_wei_two_neuron_motif_fixed_rhin(
     plasticity.αpre,plasticity.αpost,plasticity.B,
     M10,M01,wie,he,rinh)
+end
+
+
+"""
+    analytic_alphaprepost(target1, target2;
+        rinh, hexc, B, M10, M01)
+
+Compute the rate-dependent constants `αpre` and `αpost` for two desired
+operating points of the fixed-`rinh` two-neuron E/I motif.
+
+Each target is a named tuple `(wexc=..., rexc=...)`, where `wexc` is the fixed
+E→I weight and `rexc` is the desired excitatory rate. The corresponding
+learned I→E weight is `(hexc-rexc)/rinh`; consequently, `rexc == hexc`
+specifies a zero learned weight.
+
+With the package's signed `M10` convention, each target satisfies
+
+```math
+r_{\\mathrm{inh}}\\alpha_{\\mathrm{pre}} +
+r_{\\mathrm{exc}}\\alpha_{\\mathrm{post}} = -\\left[
+B r_{\\mathrm{inh}}r_{\\mathrm{exc}} +
+M_{01}w_{\\mathrm{exc}}r_{\\mathrm{exc}} +
+M_{10}(h_{\\mathrm{exc}}-r_{\\mathrm{exc}})\\right].
+```
+
+The two target rates must differ, and both solutions must be stable fixed
+points of the analytic weight dynamics. Returns
+`(αpre=value, αpost=value)`.
+"""
+function analytic_alphaprepost(
+    target1::NamedTuple{(:wexc,:rexc),<:Tuple{Real,Real}},
+    target2::NamedTuple{(:wexc,:rexc),<:Tuple{Real,Real}};
+    rinh::Real,hexc::Real,B::Real,M10::Real,M01::Real)
+  rinh_f,hexc_f,B_f,M10_f,M01_f,wexc1,rexc1,wexc2,rexc2 = promote(
+    float(rinh),float(hexc),float(B),float(M10),float(M01),
+    float(target1.wexc),float(target1.rexc),
+    float(target2.wexc),float(target2.rexc))
+  values = (rinh_f,hexc_f,B_f,M10_f,M01_f,wexc1,rexc1,wexc2,rexc2)
+  if !all(isfinite,values)
+    throw(ArgumentError("analytic parameters and targets must be finite"))
+  end
+  if !(rinh_f > 0)
+    throw(ArgumentError("rinh must be positive"))
+  end
+  if !(hexc_f > 0)
+    throw(ArgumentError("hexc must be positive"))
+  end
+  if !(-1 <= B_f <= 1)
+    throw(ArgumentError("B must be between -1 and 1"))
+  end
+  if !(wexc1 >= 0)
+    throw(ArgumentError("target wexc values must be nonnegative"))
+  end
+  if !(wexc2 >= 0)
+    throw(ArgumentError("target wexc values must be nonnegative"))
+  end
+  if !(0 <= rexc1 <= hexc_f)
+    throw(ArgumentError("target rexc values must lie between zero and hexc"))
+  end
+  if !(0 <= rexc2 <= hexc_f)
+    throw(ArgumentError("target rexc values must lie between zero and hexc"))
+  end
+  if rexc1 == rexc2
+    throw(ArgumentError("target rexc values must differ"))
+  end
+
+  constant1 = B_f*rinh_f*rexc1 + M01_f*wexc1*rexc1 +
+    M10_f*(hexc_f-rexc1)
+  constant2 = B_f*rinh_f*rexc2 + M01_f*wexc2*rexc2 +
+    M10_f*(hexc_f-rexc2)
+  αpost = (constant1-constant2)/(rexc2-rexc1)
+  αpre = (-constant1-rexc1*αpost)/rinh_f
+
+  stability1 = αpost+B_f*rinh_f+M01_f*wexc1-M10_f
+  stability2 = αpost+B_f*rinh_f+M01_f*wexc2-M10_f
+  if !(stability1 > 0)
+    throw(ArgumentError("both targets must be stable fixed points"))
+  end
+  if !(stability2 > 0)
+    throw(ArgumentError("both targets must be stable fixed points"))
+  end
+  return (αpre=αpre,αpost=αpost)
+end
+
+
+"""
+    analytic_alphaprepost(plasticity, post, pre, target1, target2;
+        rinh, hexc)
+
+Compute `αpre` and `αpost` using `plasticity` as a template for `B` and
+the STDP kernel parameters. Population arguments follow `post <- pre`: `post`
+must be excitatory and `pre` inhibitory. The implied learned weights must lie
+within the template's weight bounds.
+"""
+function analytic_alphaprepost(
+    plasticity::Union{PlasticitySymmetricSTDP,PlasticityAsymmetricSTDP},
+    post::PopulationExpKernelExcitatory,
+    pre::PopulationExpKernelInhibitory,
+    target1::NamedTuple{(:wexc,:rexc),<:Tuple{Real,Real}},
+    target2::NamedTuple{(:wexc,:rexc),<:Tuple{Real,Real}};
+    rinh::Real,hexc::Real)
+  M10 = get_motif_coef_M10(plasticity,pre)
+  M01 = get_motif_coef_M01(plasticity,post)
+  alphas = analytic_alphaprepost(
+    target1,target2;rinh=rinh,hexc=hexc,B=plasticity.B,M10=M10,M01=M01)
+
+  rinh_f,hexc_f = promote(float(rinh),float(hexc))
+  for target in (target1,target2)
+    winh = (hexc_f-float(target.rexc))/rinh_f
+    if !(plasticity.weight_min <= winh <= plasticity.weight_max)
+      throw(ArgumentError(
+        "target implies an I→E weight outside the plasticity bounds"))
+    end
+  end
+  return alphas
+end
+
+
+"""
+    analytic_alphaprepost_rule(
+        plasticity, post, pre, target1, target2;
+        rinh, hexc, weights=nothing)
+
+Create a fresh plasticity rule of the same type as `plasticity`, replacing its
+rate-dependent constants with [`analytic_alphaprepost`](@ref). Learning rate,
+kernel parameters, and weight bounds are preserved, while all traces are reset.
+
+When `weights` is supplied, its zeros define the structural-zero mask. When it
+is omitted, the returned rule assumes all-to-all plasticity with dimensions
+determined by `post <- pre`. The supplied matrix is used only to construct the
+mask and is not retained by the rule.
+"""
+function analytic_alphaprepost_rule(
+    plasticity::PlasticitySymmetricSTDP,
+    post::PopulationExpKernelExcitatory,
+    pre::PopulationExpKernelInhibitory,
+    target1::NamedTuple{(:wexc,:rexc),<:Tuple{Real,Real}},
+    target2::NamedTuple{(:wexc,:rexc),<:Tuple{Real,Real}};
+    rinh::Real,hexc::Real,
+    weights::Union{Nothing,Matrix{Float64}}=nothing)
+  alphas = analytic_alphaprepost(
+    plasticity,post,pre,target1,target2;rinh=rinh,hexc=hexc)
+  mask_weights = weights
+  if isnothing(mask_weights)
+    mask_weights = ones(Float64,nneurons(post),nneurons(pre))
+  end
+  if size(mask_weights) != (nneurons(post),nneurons(pre))
+    throw(DimensionMismatch("weights must have size (n_post, n_pre)"))
+  end
+  return PlasticitySymmetricSTDP(
+    plasticity.η,plasticity.B,alphas.αpre,alphas.αpost,
+    plasticity.τ_plus,plasticity.γ,mask_weights;
+    weight_min=plasticity.weight_min,weight_max=plasticity.weight_max)
+end
+
+function analytic_alphaprepost_rule(
+    plasticity::PlasticityAsymmetricSTDP,
+    post::PopulationExpKernelExcitatory,
+    pre::PopulationExpKernelInhibitory,
+    target1::NamedTuple{(:wexc,:rexc),<:Tuple{Real,Real}},
+    target2::NamedTuple{(:wexc,:rexc),<:Tuple{Real,Real}};
+    rinh::Real,hexc::Real,
+    weights::Union{Nothing,Matrix{Float64}}=nothing)
+  alphas = analytic_alphaprepost(
+    plasticity,post,pre,target1,target2;rinh=rinh,hexc=hexc)
+  mask_weights = weights
+  if isnothing(mask_weights)
+    mask_weights = ones(Float64,nneurons(post),nneurons(pre))
+  end
+  if size(mask_weights) != (nneurons(post),nneurons(pre))
+    throw(DimensionMismatch("weights must have size (n_post, n_pre)"))
+  end
+  return PlasticityAsymmetricSTDP(
+    plasticity.η,plasticity.B,alphas.αpre,alphas.αpost,
+    plasticity.τ_plus,plasticity.γ,mask_weights;
+    weight_min=plasticity.weight_min,weight_max=plasticity.weight_max)
 end
 
 

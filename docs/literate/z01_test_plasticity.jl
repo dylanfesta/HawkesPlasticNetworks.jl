@@ -4,7 +4,8 @@
 
 Here I use non-interacting connections and fixed rates to test
 the dw/dt for different plasticity rules in the simplest
-possible way.
+possible way, considering only the rate terms since the
+two neurons are independent Poisson, disconnected.
 
 =#
 
