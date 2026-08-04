@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Structured inhibition in two-neuron motifs · HawkesPlasticNetworks.jl</title><meta name="title" content="Structured inhibition in two-neuron motifs · HawkesPlasticNetworks.jl"/><meta property="og:title" content="Structured inhibition in two-neuron motifs · HawkesPlasticNetworks.jl"/><meta property="twitter:title" content="Structured inhibition in two-neuron motifs · HawkesPlasticNetworks.jl"/><meta name="description" content="Documentation for HawkesPlasticNetworks.jl."/><meta property="og:description" content="Documentation for HawkesPlasticNetworks.jl."/><meta property="twitter:description" content="Documentation for HawkesPlasticNetworks.jl."/><meta property="og:url" content="https://dylanfesta.github.io/HawkesPlasticNetworks.jl/generated/05_structured_inhibition_motifs/"/><meta property="twitter:url" content="https://dylanfesta.github.io/HawkesPlasticNetworks.jl/generated/05_structured_inhibition_motifs/"/><link rel="canonical" href="https://dylanfesta.github.io/HawkesPlasticNetworks.jl/generated/05_structured_inhibition_motifs/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">HawkesPlasticNetworks.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../01_single_unit/">Single self-interacting unit</a></li><li><a class="tocitem" href="../02_ei_network/">One excitatory and one inhibitory unit</a></li><li><a class="tocitem" href="../03_homeostatic_stabilization/">Homeostatic stabilization</a></li><li><a class="tocitem" href="../04_excitatory_only_networks/">Excitatory-only networks</a></li><li class="is-active"><a class="tocitem" href>Structured inhibition in two-neuron motifs</a><ul class="internal"><li><a class="tocitem" href="#Setup"><span>Setup</span></a></li><li><a class="tocitem" href="#Plasticity-rules-and-motif-configurations"><span>Plasticity rules and motif configurations</span></a></li><li><a class="tocitem" href="#Run-the-motifs"><span>Run the motifs</span></a></li><li><a class="tocitem" href="#Simulation-and-analytical-fixed-points"><span>Simulation and analytical fixed points</span></a></li></ul></li><li><a class="tocitem" href="../z01_test_plasticity/">Plasticity rule tests</a></li><li><a class="tocitem" href="../z02_test_plasticity_motifs/">Plasticity predictions in two-neuron motifs</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li class="is-active"><a href>Structured inhibition in two-neuron motifs</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Structured inhibition in two-neuron motifs</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/dylanfesta/HawkesPlasticNetworks.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/dylanfesta/HawkesPlasticNetworks.jl/blob/main/docs/literate/05_structured_inhibition_motifs.jl#" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Structured-inhibition-in-two-neuron-motifs"><a class="docs-heading-anchor" href="#Structured-inhibition-in-two-neuron-motifs">Structured inhibition in two-neuron motifs</a><a id="Structured-inhibition-in-two-neuron-motifs-1"></a><a class="docs-heading-anchor-permalink" href="#Structured-inhibition-in-two-neuron-motifs" title="Permalink"></a></h1><p>This example studies inhibitory plasticity in a motif containing one excitatory (E) and one inhibitory (I) neuron. It reproduces the qualitative comparison in Figure 1 of:</p><blockquote><p>Dylan Festa, Claudia Cusseddu, Julijana Gjorgjieva (2026) &quot;Structured stabilization in recurrent neural circuits through inhibitory synaptic plasticity.&quot; <em>eLife</em> 15:RP111666. <a href="https://doi.org/10.7554/eLife.111666">doi:10.7554/eLife.111666</a></p></blockquote><p>We compare a reciprocal motif, in which E excites I and I inhibits E, with an effectively unidirectional motif, in which the E-to-I connection is negligible. For each motif we simulate three inhibitory-to-excitatory STDP rules:</p><ul><li>rate-dominated symmetric STDP;</li><li>covariance-dominated symmetric STDP; and</li><li>covariance-dominated asymmetric STDP.</li></ul><p>Throughout the example, connection names and matrices use the package&#39;s <code>post &lt;- pre</code> convention. Thus <code>weight_ei</code> denotes the plastic <code>E &lt;- I</code> weight, while <code>weight_ie</code> denotes the fixed <code>I &lt;- E</code> weight.</p><h2 id="Setup"><a class="docs-heading-anchor" href="#Setup">Setup</a><a id="Setup-1"></a><a class="docs-heading-anchor-permalink" href="#Setup" title="Permalink"></a></h2><pre><code class="language-julia hljs">using Random
+using Plots
+using HawkesPlasticNetworks
+global const H = HawkesPlasticNetworks</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">HawkesPlasticNetworks</code></pre><p>The inhibitory input is adjusted during each simulation to hold the mean inhibitory rate at <code>rate_i_target</code>. In the linear rate approximation,</p><p class="math-container">\[r_E = h_E-w_{E\leftarrow I}r_I,
+\qquad
+h_I = r_I-w_{I\leftarrow E}r_E.\]</p><pre><code class="language-julia hljs">function inhibitory_input_for_target(
+    rate_i_target::Real,
+    weight_ie::Real,
+    weight_ei::Real,
+    input_e::Real)
+  rate_e = H.hardbounds(input_e-weight_ei*rate_i_target,0.0,Inf)
+  return rate_i_target-weight_ie*rate_e
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">inhibitory_input_for_target (generic function with 1 method)</code></pre><p><code>simulate_motif</code> constructs one motif and records its excitatory rate and plastic <code>E &lt;- I</code> weight. A callback updates the inhibitory input every 0.5 seconds so that changes in the plastic weight do not move the target inhibitory rate. Seeding each run makes the comparison reproducible.</p><pre><code class="language-julia hljs">function simulate_motif(
+    plasticity_ei::H.AbstractPlasticityRule,
+    weight_ie::Real,
+    input_e::Real,
+    rate_i_target::Real;
+    weight_ei_start::Real=1E-4,
+    kernel_e::Real=30E-3,
+    kernel_i::Real=30E-3,
+    recording_interval::Real=300.0,
+    simulation_duration::Real=3*3600.0,
+    seed::Integer=0)
+  Random.seed!(seed)
+  H.reset!(plasticity_ei)
+
+  population_e = H.PopulationExpKernelExcitatory(
+      1,kernel_e;label=&quot;excitatory&quot;)
+  population_i = H.PopulationExpKernelInhibitory(
+      1,kernel_i;label=&quot;inhibitory&quot;)
+
+  weights_ie = fill(Float64(weight_ie),1,1)
+  weights_ei = fill(Float64(weight_ei_start),1,1)
+  connection_ie = H.ConnectionWithWeights(
+      population_i,weights_ie,population_e)
+  connection_ei = H.ConnectionWithWeights(
+      population_e,weights_ei,population_i;
+      plasticity_rules=(plasticity_ei,))
+
+  input_i_start = inhibitory_input_for_target(
+      rate_i_target,weight_ie,weight_ei_start,input_e)
+  connected_e = H.ConnectedPopulationExpKernel(
+      population_e,[Float64(input_e)],
+      (connection_ei,population_i))
+  connected_i = H.ConnectedPopulationExpKernel(
+      population_i,[Float64(input_i_start)],
+      (connection_ie,population_e))
+
+  recorder_rate_e = H.RecorderPopulationRate(
+      population_e,simulation_duration;Δt=recording_interval)
+  recorder_weight_ei = H.WeightMatrixRecorder(
+      connection_ei.weights,recording_interval,simulation_duration)
+
+  function update_inhibitory_input!(
+      _time,_population_index,_population_label,_neuron_index)
+    connected_i.input[1] = inhibitory_input_for_target(
+        rate_i_target,only(connection_ie.weights),
+        only(connection_ei.weights),input_e)
+    return nothing
+  end
+  keep_inhibitory_rate_fixed = H.DoEveryDt(
+      update_inhibitory_input!,0.5;Tstart=0.0)
+
+  network = H.RecurrentNetworkExpKernel(
+      (connected_e,connected_i),
+      (recorder_rate_e,recorder_weight_ei,keep_inhibitory_rate_fixed))
+  H.reset!(network)
+
+  time_now = 0.0
+  while time_now &lt; simulation_duration
+    time_now = H.dynamics_step!(time_now,network)
+  end
+
+  rate_content = H.get_content(recorder_rate_e)
+  weight_content = H.get_content(recorder_weight_ei)
+  analytic_weight_ei = H.analytic_wei_two_neuron_motif_fixed_rhin(
+      plasticity_ei,population_i,population_e,
+      weight_ie,input_e,rate_i_target)
+
+  return (
+      rate_times=rate_content.times,
+      rates_e=rate_content.rates,
+      weight_times=weight_content.times,
+      weights_ei=vec(weight_content.weights[:,1,1]),
+      final_weight_ei=only(connection_ei.weights),
+      analytic_weight_ei=analytic_weight_ei)
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">simulate_motif (generic function with 1 method)</code></pre><h2 id="Plasticity-rules-and-motif-configurations"><a class="docs-heading-anchor" href="#Plasticity-rules-and-motif-configurations">Plasticity rules and motif configurations</a><a id="Plasticity-rules-and-motif-configurations-1"></a><a class="docs-heading-anchor-permalink" href="#Plasticity-rules-and-motif-configurations" title="Permalink"></a></h2><p>All simulations use the same external E input, target I rate, kernel timescales, initial plastic weight, and weight bounds. A fixed <code>I &lt;- E</code> weight of <code>0.5</code> creates the reciprocal motif; a value close to zero removes that feedback without introducing a structural zero.</p><pre><code class="language-julia hljs">input_e = 40.0
+rate_i_target = 80.0
+kernel_e = 30E-3
+kernel_i = 30E-3
+plasticity_timescale = 50E-3
+weight_ei_start = 1E-4
+weight_min = 1E-8
+weight_max = 100.0
+weight_ie_reciprocal = 0.5
+weight_ie_unidirectional = 1E-8
+simulation_duration = 3*3600.0
+recording_interval = 300.0;</code></pre><p>The rate-dominated rule is the homeostatic symmetric rule. The other two rules have zero rate-product bias (<code>B = 0</code>) and differ in whether their STDP windows are symmetric or asymmetric.</p><pre><code class="language-julia hljs">rate_e_target = 25.0
+plasticity_rate_dominated = let
+  weights = fill(weight_ei_start,1,1)
+  H.PlasticitySymmetricSTDP(
+      4E-7,1.0,-rate_e_target,0.0,0.2,123456.0,weights;
+      weight_min=weight_min,weight_max=weight_max)
+end
+
+plasticity_covariance_symmetric = let
+  weights = fill(weight_ei_start,1,1)
+  H.PlasticitySymmetricSTDP(
+      3E-6,0.0,-0.0302,0.362,plasticity_timescale,10.0,weights;
+      weight_min=weight_min,weight_max=weight_max)
+end
+
+plasticity_covariance_asymmetric = let
+  weights = fill(weight_ei_start,1,1)
+  H.PlasticityAsymmetricSTDP(
+      3E-6,0.0,-0.0710,3.98,plasticity_timescale,1.0,weights;
+      weight_min=weight_min,weight_max=weight_max)
+end;</code></pre><h2 id="Run-the-motifs"><a class="docs-heading-anchor" href="#Run-the-motifs">Run the motifs</a><a id="Run-the-motifs-1"></a><a class="docs-heading-anchor-permalink" href="#Run-the-motifs" title="Permalink"></a></h2><p>Each plasticity object is reset before a run, and every configuration gets a distinct deterministic seed. The analytical fixed point is calculated from the same rule and motif parameters as the corresponding simulation.</p><pre><code class="language-julia hljs">rule_configurations = (
+  (name=&quot;Rate-dominated symmetric STDP&quot;,
+    rule=plasticity_rate_dominated),
+  (name=&quot;Covariance-dominated symmetric STDP&quot;,
+    rule=plasticity_covariance_symmetric),
+  (name=&quot;Covariance-dominated asymmetric STDP&quot;,
+    rule=plasticity_covariance_asymmetric),
+)
+
+motif_results = map(enumerate(rule_configurations)) do (rule_index,configuration)
+  reciprocal = simulate_motif(
+      configuration.rule,weight_ie_reciprocal,input_e,rate_i_target;
+      weight_ei_start=weight_ei_start,kernel_e=kernel_e,kernel_i=kernel_i,
+      recording_interval=recording_interval,
+      simulation_duration=simulation_duration,seed=100+2rule_index)
+  unidirectional = simulate_motif(
+      configuration.rule,weight_ie_unidirectional,input_e,rate_i_target;
+      weight_ei_start=weight_ei_start,kernel_e=kernel_e,kernel_i=kernel_i,
+      recording_interval=recording_interval,
+      simulation_duration=simulation_duration,seed=101+2rule_index)
+  (name=configuration.name,
+    reciprocal=reciprocal,unidirectional=unidirectional)
+end;</code></pre><h2 id="Simulation-and-analytical-fixed-points"><a class="docs-heading-anchor" href="#Simulation-and-analytical-fixed-points">Simulation and analytical fixed points</a><a id="Simulation-and-analytical-fixed-points-1"></a><a class="docs-heading-anchor-permalink" href="#Simulation-and-analytical-fixed-points" title="Permalink"></a></h2><p>Solid curves show the simulations and dashed lines show the first-order analytical fixed points. The top panel in each row gives the E rate; the bottom panel gives the plastic <code>E &lt;- I</code> weight. Using one combined figure keeps axis sizes, colors, and line styles consistent across all three rules.</p><pre><code class="language-julia hljs">rate_color_reciprocal = :darkblue
+rate_color_unidirectional = :darkgreen
+weight_color_reciprocal = :brown
+weight_color_unidirectional = :darkorange
+line_width = 2.5
+panels = Any[]
+
+for result in motif_results
+  reciprocal = result.reciprocal
+  unidirectional = result.unidirectional
+
+  rate_panel = plot(
+      reciprocal.rate_times./60.0,reciprocal.rates_e;
+      label=&quot;reciprocal simulation&quot;,color=rate_color_reciprocal,
+      linewidth=line_width,title=result.name,ylabel=&quot;E rate (Hz)&quot;,
+      ylim=(10,40),legend=:bottomright)
+  plot!(
+      rate_panel,unidirectional.rate_times./60.0,
+      unidirectional.rates_e;
+      label=&quot;unidirectional simulation&quot;,color=rate_color_unidirectional,
+      linewidth=line_width)
+  hline!(
+      rate_panel,
+      [input_e-reciprocal.analytic_weight_ei*rate_i_target];
+      label=&quot;reciprocal theory&quot;,color=rate_color_reciprocal,
+      linestyle=:dash,linewidth=line_width)
+  hline!(
+      rate_panel,
+      [input_e-unidirectional.analytic_weight_ei*rate_i_target];
+      label=&quot;unidirectional theory&quot;,color=rate_color_unidirectional,
+      linestyle=:dash,linewidth=line_width)
+
+  weight_panel = plot(
+      reciprocal.weight_times./60.0,reciprocal.weights_ei;
+      label=&quot;reciprocal simulation&quot;,color=weight_color_reciprocal,
+      linewidth=line_width,xlabel=&quot;time (min)&quot;,ylabel=&quot;E &lt;- I weight&quot;,
+      ylim=(0,0.25),legend=:right)
+  plot!(
+      weight_panel,unidirectional.weight_times./60.0,
+      unidirectional.weights_ei;
+      label=&quot;unidirectional simulation&quot;,color=weight_color_unidirectional,
+      linewidth=line_width)
+  hline!(
+      weight_panel,[reciprocal.analytic_weight_ei];
+      label=&quot;reciprocal theory&quot;,color=weight_color_reciprocal,
+      linestyle=:dash,linewidth=line_width)
+  hline!(
+      weight_panel,[unidirectional.analytic_weight_ei];
+      label=&quot;unidirectional theory&quot;,color=weight_color_unidirectional,
+      linestyle=:dash,linewidth=line_width)
+
+  push!(panels,rate_panel,weight_panel)
+end
+
+plot(
+    panels...;
+    layout=(3,2),size=(1200,1050),
+    left_margin=5Plots.mm,bottom_margin=4Plots.mm)</code></pre><img src="d0b47313.svg" alt="Example block output"/><p>The reciprocal interaction changes the correlation structure seen by the plastic synapse. Consequently, the covariance-dominated rules can stabilize different E rates in the two motifs, whereas the rate-dominated rule remains governed primarily by its target rate. Small differences between solid and dashed curves are expected because the analytical result is a first-order, unrectified approximation.</p><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../04_excitatory_only_networks/">« Excitatory-only networks</a><a class="docs-footer-nextpage" href="../z01_test_plasticity/">Plasticity rule tests »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Tuesday 4 August 2026 14:52">Tuesday 4 August 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
