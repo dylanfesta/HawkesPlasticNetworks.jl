@@ -21,6 +21,7 @@ below; the API index lists the currently available components.
 - [Inhibitory homeostatic plasticity](generated/03_homeostatic_stabilization.md)
 - [Excitatory-only networks](generated/04_excitatory_only_networks.md)
 - [Structured inhibition in two-neuron motifs](generated/05_structured_inhibition_motifs.md)
+- [Weight specialization in a three-neuron inhibitory motif](generated/06_three_neuron_inhibitory_motif.md)
 
 ## Tests on plasticity
 

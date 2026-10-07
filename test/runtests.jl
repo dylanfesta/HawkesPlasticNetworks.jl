@@ -12,6 +12,7 @@ include("plasticity_symmetric_stdp.jl")
 include("plasticity_vogels_sprekeler.jl")
 include("weight_matrix_utilities.jl")
 include("analytics.jl")
+include("three_neuron_motif_example.jl")
 
 function HawkesPlasticNetworks.apply_plasticity!(
         rule::TestPlasticityRule,
