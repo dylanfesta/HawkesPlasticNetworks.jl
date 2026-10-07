@@ -2,7 +2,7 @@
 
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://dylanfesta.github.io/HawkesPlasticNetworks.jl/dev/)
 [![Build Status](https://github.com/dylanfesta/HawkesPlasticNetworks.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/dylanfesta/HawkesPlasticNetworks.jl/actions/workflows/CI.yml?query=branch%3Amain)
-[![License: CC0-1.0](https://img.shields.io/badge/License-CC0_1.0-lightgrey.svg)](http://creativecommons.org/publicdomain/zero/1.0/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 This package allows to build networks of Poisson units that can interact
 by either potentiating (excitatory) or depressing (inhibitory) each other. 

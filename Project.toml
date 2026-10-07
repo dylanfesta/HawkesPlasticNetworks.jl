@@ -1,6 +1,6 @@
 name = "HawkesPlasticNetworks"
 uuid = "9724e5c5-7aed-47db-80f4-0e6e77768d7f"
-version = "1.0.0-DEV"
+version = "0.1.0"
 authors = ["Dylan Festa"]
 
 [deps]
