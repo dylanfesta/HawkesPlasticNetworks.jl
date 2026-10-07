@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Weight specialization in a three-neuron inhibitory motif · HawkesPlasticNetworks.jl</title><meta name="title" content="Weight specialization in a three-neuron inhibitory motif · HawkesPlasticNetworks.jl"/><meta property="og:title" content="Weight specialization in a three-neuron inhibitory motif · HawkesPlasticNetworks.jl"/><meta property="twitter:title" content="Weight specialization in a three-neuron inhibitory motif · HawkesPlasticNetworks.jl"/><meta name="description" content="Documentation for HawkesPlasticNetworks.jl."/><meta property="og:description" content="Documentation for HawkesPlasticNetworks.jl."/><meta property="twitter:description" content="Documentation for HawkesPlasticNetworks.jl."/><meta property="og:url" content="https://dylanfesta.github.io/HawkesPlasticNetworks.jl/generated/06_three_neuron_inhibitory_motif/"/><meta property="twitter:url" content="https://dylanfesta.github.io/HawkesPlasticNetworks.jl/generated/06_three_neuron_inhibitory_motif/"/><link rel="canonical" href="https://dylanfesta.github.io/HawkesPlasticNetworks.jl/generated/06_three_neuron_inhibitory_motif/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.63.2/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">HawkesPlasticNetworks.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../01_single_unit/">Single self-interacting unit</a></li><li><a class="tocitem" href="../02_ei_network/">One excitatory and one inhibitory unit</a></li><li><a class="tocitem" href="../03_homeostatic_stabilization/">Homeostatic stabilization</a></li><li><a class="tocitem" href="../04_excitatory_only_networks/">Excitatory-only networks</a></li><li><a class="tocitem" href="../05_structured_inhibition_motifs/">Structured inhibition in two-neuron motifs</a></li><li class="is-active"><a class="tocitem" href>Weight specialization in a three-neuron inhibitory motif</a><ul class="internal"><li><a class="tocitem" href="#Setup-and-parameters"><span>Setup and parameters</span></a></li><li><a class="tocitem" href="#Keep-the-inhibitory-operating-point-fixed"><span>Keep the inhibitory operating point fixed</span></a></li><li><a class="tocitem" href="#Analytical-predictions"><span>Analytical predictions</span></a></li><li><a class="tocitem" href="#Build-and-simulate-the-motif"><span>Build and simulate the motif</span></a></li><li><a class="tocitem" href="#Configure-and-run-the-comparison"><span>Configure and run the comparison</span></a></li><li><a class="tocitem" href="#Stabilization-and-individual-inhibitory-weights"><span>Stabilization and individual inhibitory weights</span></a></li><li><a class="tocitem" href="#Total-inhibition-versus-specialization"><span>Total inhibition versus specialization</span></a></li><li><a class="tocitem" href="#Comparing-the-rules-at-the-same-learning-rate"><span>Comparing the rules at the same learning rate</span></a></li></ul></li><li><a class="tocitem" href="../z01_test_plasticity/">Plasticity rule tests</a></li><li><a class="tocitem" href="../z02_test_plasticity_motifs/">Plasticity predictions in two-neuron motifs</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li class="is-active"><a href>Weight specialization in a three-neuron inhibitory motif</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Weight specialization in a three-neuron inhibitory motif</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/dylanfesta/HawkesPlasticNetworks.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/dylanfesta/HawkesPlasticNetworks.jl/blob/main/docs/literate/06_three_neuron_inhibitory_motif.jl#" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Weight-specialization-in-a-three-neuron-inhibitory-motif"><a class="docs-heading-anchor" href="#Weight-specialization-in-a-three-neuron-inhibitory-motif">Weight specialization in a three-neuron inhibitory motif</a><a id="Weight-specialization-in-a-three-neuron-inhibitory-motif-1"></a><a class="docs-heading-anchor-permalink" href="#Weight-specialization-in-a-three-neuron-inhibitory-motif" title="Permalink"></a></h1><p><img src="../../assets/three_neuron_motif.png" alt="Model schematic of one excitatory and two inhibitory neurons"/></p><p>The schematic&#39;s <code>Wₑ</code>, <code>W₁</code>, and <code>W₂</code> correspond to <code>w_IE</code>, <code>w₁</code>, and <code>w₂</code> in the code. Adaptive inputs maintain the target mean inhibitory rate <code>r_I</code>.</p><p>In the <a href="../05_structured_inhibition_motifs/">two-neuron example</a>, inhibitory plasticity stabilizes an excitatory neuron. Here we ask a second question: how do different STDP rules compare, when two inhibitory neurons compete with one another for stabilizing an excitatory neurons?</p><p>The motif contains one excitatory neuron E and two inhibitory neurons I₁ and I₂. Both inhibit E through plastic weights <code>w₁</code> and <code>w₂</code>, but only I₁ receives fixed excitation from E. This reciprocal connection produces a correlation with E in inhibitory neuron 1 but not in 2.</p><p>We compare rate-dominated and covariance-dominated symmetric STDP. We calibrate both rules to the same predicted E rate and choose learning rates that give the same predicted relaxation time for <code>w₁+w₂</code>. This lets us compare weight specialization while controlling for the speed of overall stabilization.</p><h2 id="Setup-and-parameters"><a class="docs-heading-anchor" href="#Setup-and-parameters">Setup and parameters</a><a id="Setup-and-parameters-1"></a><a class="docs-heading-anchor-permalink" href="#Setup-and-parameters" title="Permalink"></a></h2><p>Install the documentation environment and run this file from the repository:</p><pre><code class="language-sh hljs">julia --project=docs -e &#39;using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()&#39;
+julia --project=docs docs/literate/06_three_neuron_inhibitory_motif.jl</code></pre><p>Time is measured in seconds, firing rates in Hz, and weights are integrated kernel strengths. The eight hours below refer to simulated time. A single <code>recording_interval</code> controls the rate bins and weight recording for every run and figure; we use 60 seconds throughout.</p><pre><code class="language-julia hljs">using Random
+using HawkesPlasticNetworks
+const H = HawkesPlasticNetworks
+
+const τ_syn = 30E-3
+const τ_plast = 50E-3
+const r_I = 80.0
+const h_E = 40.0
+const r_E_target = 25.0
+const w_IE = 0.5
+const weight_start = 1E-4
+const weight_min = 1E-8
+const weight_max = 100.0
+const recording_interval = 60.0;</code></pre><p>The package uses <code>post &lt;- pre</code> ordering. Thus <code>w_IE</code> means <code>I₁ &lt;- E</code>, while <code>w₁</code> and <code>w₂</code> mean <code>E &lt;- I₁</code> and <code>E &lt;- I₂</code>. All stored weights are nonnegative magnitudes: the inhibitory population type supplies the minus sign when computing E&#39;s intensity.</p><h2 id="Keep-the-inhibitory-operating-point-fixed"><a class="docs-heading-anchor" href="#Keep-the-inhibitory-operating-point-fixed">Keep the inhibitory operating point fixed</a><a id="Keep-the-inhibitory-operating-point-fixed-1"></a><a class="docs-heading-anchor-permalink" href="#Keep-the-inhibitory-operating-point-fixed" title="Permalink"></a></h2><p>To isolate the role of correlations, we adjust the external inputs so that both inhibitory neurons remain near <code>r_I</code>. In a linear mean-rate approximation,</p><p class="math-container">\[r_E = h_E-(w_1+w_2)\,r_I,\qquad
+h_{I_1}=r_I-w_{IE}\,r_E,\qquad h_{I_2}=r_I.\]</p><pre><code class="language-julia hljs">function set_inhibitory_input_for_target!(
+    input_i::Vector{&lt;:Real},r_I::Real,w_IE::Real,
+    w₁::Real,w₂::Real,h_E::Real)
+  r_E = H.hardbounds(h_E-(w₁+w₂)*r_I,0.0,Inf)
+  input_i[1] = r_I-w_IE*r_E
+  input_i[2] = r_I
+  return nothing
+end;</code></pre><h2 id="Analytical-predictions"><a class="docs-heading-anchor" href="#Analytical-predictions">Analytical predictions</a><a id="Analytical-predictions-1"></a><a class="docs-heading-anchor-permalink" href="#Analytical-predictions" title="Permalink"></a></h2><p>The motif coefficients combine the STDP window with the source neuron&#39;s interaction kernel. <code>M10</code> describes the forward <code>E &lt;- I</code> interaction and includes its inhibitory sign; <code>M01</code> describes the backward <code>I &lt;- E</code> interaction. Higher order interactions are neglected, but vanishing small in these settings. With symmetric STDP and equal synaptic timescales, <code>M10 = -M</code> and <code>M01 = M</code>, where <code>M &gt; 0</code>.</p><pre><code class="language-julia hljs">function get_motif_coefficients(rule::H.PlasticitySymmetricSTDP)
+  population_e = H.PopulationExpKernelExcitatory(1,τ_syn;label=&quot;e&quot;)
+  population_i = H.PopulationExpKernelInhibitory(2,τ_syn;label=&quot;i&quot;)
+  return (
+      M10=H.get_motif_coef_M10(rule,population_i),
+      M01=H.get_motif_coef_M01(rule,population_e))
+end;</code></pre><p>Let <code>s = w₁+w₂</code> denote total inhibition and <code>d = w₁-w₂</code> its allocation. The first-order mean plasticity drifts are</p><p class="math-container">\[\dot w_1=\eta\,[\alpha_{\mathrm{pre}}\,r_I+
+(\alpha_{\mathrm{post}}+B\,r_I)\,r_E-M\,w_1\,r_I+M\,w_{IE}\,r_E],
+\qquad
+\dot w_2=\eta\,[\alpha_{\mathrm{pre}}\,r_I+
+(\alpha_{\mathrm{post}}+B\,r_I)\,r_E-M\,w_2\,r_I].\]</p><p>Summing these equations and substituting <code>r_E = h_E-s*r_I</code> gives a relaxation coefficient <code>c₂ = M*(1+w_IE)+2*(αpost+B*r_I)</code>. Subtracting them gives <code>ḋ = η*M*(w_IE*r_E-r_I*d)</code>. Thus the characteristic times are</p><p class="math-container">\[\tau_{\mathrm{sum}}=\frac{1}{\eta\,r_I\,c_2},\qquad
+\tau_{\mathrm{difference}}=\frac{1}{\eta\,r_I\,M}.\]</p><p>The difference is driven by the changing E rate as the sum settles. At a fixed point, <code>s*=(h_E-r_E*)/r_I</code> and <code>d*=w_IE*r_E*/r_I</code>. Solving yields the predictions below.</p><pre><code class="language-julia hljs">function motif_predictions(rule::H.PlasticitySymmetricSTDP,w_IE::Real=w_IE)
+  M = abs(get_motif_coefficients(rule).M10)
+  c₂ = M*(1+w_IE)+2*(rule.αpost+rule.B*r_I)
+  r_E = (M*h_E-2*rule.αpre*r_I)/c₂
+  w₁ = (h_E+(w_IE-1)*r_E)/(2*r_I)
+  w₂ = (h_E-(1+w_IE)*r_E)/(2*r_I)
+  τ_sum = 1/(rule.η*r_I*c₂)
+  τ_difference = 1/(rule.η*r_I*M)
+  return (;M,c₂,r_E,w₁,w₂,τ_sum,τ_difference,
+      ratio=c₂/M)
+end;</code></pre><p>Both rules use <code>αpost = 0</code>. The value of <code>αpre</code> is chosen by solving the fixed-point expression for the desired <code>r_E_target</code>. So, summing up, both rate-dominated and covariance-dominated rule have the same target rate, and the same convergence time to it.</p><p><code>PlasticitySymmetricSTDP</code> takes <code>(η, B, αpre, αpost, τ_plus, γ, weights)</code>. Its trace sizes and structural-zero mask come from <code>weights</code>: initialize the two plastic weights to small <strong>nonzero</strong> values, since zeros at rule construction are excluded from plasticity.</p><pre><code class="language-julia hljs">function plasticity_for_target_rate(η::Real,B::Real,γ::Real)
+  weights = fill(weight_start,1,2)
+  αpost = 0.0 # here αpost is always zero
+  reference = H.PlasticitySymmetricSTDP(
+      η,B,0.0,0.0,τ_plast,γ,weights;
+      weight_min=weight_min,weight_max=weight_max)
+  prediction = motif_predictions(reference)
+  αpre = (prediction.M*h_E-r_E_target*prediction.c₂)/(2*r_I)
+  return H.PlasticitySymmetricSTDP(
+      η,B,αpre,αpost,τ_plast,γ,weights;
+      weight_min=weight_min,weight_max=weight_max)
+end;</code></pre><h2 id="Build-and-simulate-the-motif"><a class="docs-heading-anchor" href="#Build-and-simulate-the-motif">Build and simulate the motif</a><a id="Build-and-simulate-the-motif-1"></a><a class="docs-heading-anchor-permalink" href="#Build-and-simulate-the-motif" title="Permalink"></a></h2><p>Use one population for E and one for the two inhibitory neurons. The fixed excitation matrix has two rows and one column; the second row is exactly zero because the <code>I₂ &lt;- E</code> connection is absent. The plastic inhibition matrix has one row and two columns, matching the rule constructed above.</p><pre><code class="language-julia hljs">function simulate_motif(
+    rule::H.PlasticitySymmetricSTDP,w_IE::Real=w_IE;
+    simulation_duration::Real=8*3600.0,
+    recording_interval::Real=recording_interval,
+    w₁_start::Real=weight_start,w₂_start::Real=weight_start,
+    input_update_interval::Real=0.2,seed::Integer=0)
+  Random.seed!(seed)
+  H.reset!(rule)
+
+  population_e = H.PopulationExpKernelExcitatory(1,τ_syn;label=&quot;e&quot;)
+  population_i = H.PopulationExpKernelInhibitory(2,τ_syn;label=&quot;i&quot;)
+  connection_ie = H.ConnectionWithWeights(
+      population_i,reshape([Float64(w_IE),0.0],2,1),population_e)
+  connection_ei = H.ConnectionWithWeights(
+      population_e,[Float64(w₁_start) Float64(w₂_start)],population_i;
+      plasticity_rules=(rule,))
+
+  # Connected populations pair each incoming connection with its source.
+  connected_e = H.ConnectedPopulationExpKernel(
+      population_e,[h_E],(connection_ei,population_i))
+  connected_i = H.ConnectedPopulationExpKernel(
+      population_i,zeros(2),(connection_ie,population_e))
+  set_inhibitory_input_for_target!(
+      connected_i.input,r_I,w_IE,w₁_start,w₂_start,h_E)
+
+  # Population rates are binned spike counts divided by bin duration and
+  # population size: the I recorder reports the mean over I₁ and I₂.
+  recorder_e = H.RecorderPopulationRate(
+      population_e,simulation_duration;Δt=recording_interval)
+  recorder_i = H.RecorderPopulationRate(
+      population_i,simulation_duration;Δt=recording_interval)
+  recorder_weights = H.WeightMatrixRecorder(
+      connection_ei.weights,recording_interval,simulation_duration)
+
+  # DoEveryDt runs on the first spike event at least this interval after
+  # its previous invocation, rather than on an independent time grid.
+  function update_inhibitory_input!(
+      _time,_population_index,_population_label,_neuron_index)
+    set_inhibitory_input_for_target!(
+        connected_i.input,r_I,connection_ie.weights[1,1],
+        connection_ei.weights[1,1],connection_ei.weights[1,2],h_E)
+    return nothing
+  end
+  input_callback = H.DoEveryDt(
+      update_inhibitory_input!,input_update_interval;Tstart=0.0)
+  network = H.RecurrentNetworkExpKernel(
+      (connected_e,connected_i),
+      (recorder_e,recorder_i,recorder_weights,input_callback))
+
+  # Network reset clears population traces and recorders. Rule traces need
+  # the separate reset above; weights and external inputs are not reset.
+  H.reset!(network)
+  time_now = 0.0
+  while time_now &lt; simulation_duration
+    time_now = H.dynamics_step!(time_now,network)
+  end
+
+  # Rate content omits the last incomplete bin. Weight snapshots are
+  # event-triggered and have dimensions (time, post, pre), so retain their
+  # own time vector instead of assuming it equals the rate time vector.
+  content_e = H.get_content(recorder_e)
+  content_i = H.get_content(recorder_i)
+  content_weights = H.get_content(recorder_weights)
+  return (
+      rate_times=content_e.times,rates_e=content_e.rates,
+      rates_i=content_i.rates,weight_times=content_weights.times,
+      w₁=vec(content_weights.weights[:,1,1]),
+      w₂=vec(content_weights.weights[:,1,2]),
+      final_weights=copy(connection_ei.weights),
+      final_input_i=copy(connected_i.input),
+      prediction=motif_predictions(rule,w_IE))
+end;</code></pre><h2 id="Configure-and-run-the-comparison"><a class="docs-heading-anchor" href="#Configure-and-run-the-comparison">Configure and run the comparison</a><a id="Configure-and-run-the-comparison-1"></a><a class="docs-heading-anchor-permalink" href="#Configure-and-run-the-comparison" title="Permalink"></a></h2><p>With <code>B = 1</code> (rate-dominated rule), the timing window contributes a rate-product term; the calibrated negative <code>αpre</code> supplies homeostatic depression. With <code>B = 0</code> (covariance-dominated rule), positive and negative timing contributions have zero net area, eliminating the independent-rate product and emphasizing covariance. <code>γ</code> sets the negative trace&#39;s time constant relative to <code>τ_plast</code>; it has no effect on the <code>B = 1</code> window because that window&#39;s negative amplitude is zero.</p><p>First compute each sum coefficient with a reference learning rate, then choose <code>η_rate*c₂_rate = η_covariance*c₂_covariance</code>. So that the sum of inhibitory weights (i.e. the sum mode) and the excitatory rate converge with equal speed for the two rules.</p><pre><code class="language-julia hljs">using Plots
+
+reference_rate = plasticity_for_target_rate(1.0,1.0,123456.0)
+reference_covariance = plasticity_for_target_rate(1.0,0.0,10.0)
+η_covariance = 3E-6
+η_rate = η_covariance*motif_predictions(reference_covariance).c₂ /
+    motif_predictions(reference_rate).c₂
+
+rule_rate = plasticity_for_target_rate(η_rate,1.0,123456.0)
+rule_covariance = plasticity_for_target_rate(η_covariance,0.0,10.0)
+prediction_rate = motif_predictions(rule_rate)
+prediction_covariance = motif_predictions(rule_covariance);</code></pre><p>The sum timescale is about 0.29 hours for both rules (equal by construction). The difference timescale is about 7.88 hours for the rate-dominated rule and 0.44 hours for the covariance-dominated rule. The ratio is independent of <code>η</code>.</p><pre><code class="language-julia hljs">for (name,prediction) in ((&quot;Rate-dominated&quot;,prediction_rate),
+    (&quot;Covariance-dominated&quot;,prediction_covariance))
+  println(name,&quot;: τ_sum = &quot;,round(prediction.τ_sum/3600;digits=2),
+      &quot; h, τ_difference = &quot;,round(prediction.τ_difference/3600;digits=2),
+      &quot; h, ratio = &quot;,round(prediction.ratio;digits=2))
+end
+
+simulation_duration = 8*3600.0
+result_rate = simulate_motif(rule_rate;
+    simulation_duration=simulation_duration,
+    recording_interval=recording_interval,seed=1)
+result_covariance = simulate_motif(rule_covariance;
+    simulation_duration=simulation_duration,
+    recording_interval=recording_interval,seed=2);</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Rate-dominated: τ_sum = 0.29 h, τ_difference = 7.88 h, ratio = 27.1
+Covariance-dominated: τ_sum = 0.29 h, τ_difference = 0.44 h, ratio = 1.5</code></pre><h2 id="Stabilization-and-individual-inhibitory-weights"><a class="docs-heading-anchor" href="#Stabilization-and-individual-inhibitory-weights">Stabilization and individual inhibitory weights</a><a id="Stabilization-and-individual-inhibitory-weights-1"></a><a class="docs-heading-anchor-permalink" href="#Stabilization-and-individual-inhibitory-weights" title="Permalink"></a></h2><p>Solid curves show simulation results; dashed lines give first-order fixed points. Both rules predict <code>r_E* = 25 Hz</code>, <code>w₁* = 0.171875</code>, and <code>w₂* = 0.015625</code>. I₁ learns stronger inhibition because of its reciprocal excitation from E.</p><pre><code class="language-julia hljs">rate_panel = plot(;ylabel=&quot;E rate (Hz)&quot;,ylim=(0,45),legend=:topright)
+weight_panel = plot(;xlabel=&quot;time (hours)&quot;,ylabel=&quot;inhibitory weight&quot;,
+    ylim=(0,0.22),legend=:outerright)
+configurations = (
+  (name=&quot;Rate-dominated&quot;,result=result_rate,colors=(:darkgreen,:seagreen)),
+  (name=&quot;Covariance-dominated&quot;,result=result_covariance,colors=(:purple,:orchid)),
+);
+
+for configuration in configurations
+  result = configuration.result
+  prediction = result.prediction
+  color₁,color₂ = configuration.colors
+  plot!(rate_panel,result.rate_times./3600,result.rates_e;
+      label=configuration.name,color=color₁,linewidth=2)
+  plot!(weight_panel,result.weight_times./3600,result.w₁;
+      label=configuration.name*&quot;: w₁&quot;,color=color₁,linewidth=2)
+  plot!(weight_panel,result.weight_times./3600,result.w₂;
+      label=configuration.name*&quot;: w₂&quot;,color=color₂,linewidth=2)
+end
+hline!(rate_panel,[prediction_rate.r_E];
+    label=&quot;theory (both rules)&quot;,color=:black,linestyle=:dash)
+hline!(weight_panel,[prediction_rate.w₁];
+    label=&quot;theory: w₁&quot;,color=:black,linestyle=:dash)
+hline!(weight_panel,[prediction_rate.w₂];
+    label=&quot;theory: w₂&quot;,color=:black,linestyle=:dash)
+rate_weight_figure = plot(rate_panel,weight_panel;layout=(2,1),
+    size=(1000,750),left_margin=5Plots.mm,bottom_margin=4Plots.mm)
+rate_weight_figure</code></pre><img src="b7916031.svg" alt="Example block output"/><h2 id="Total-inhibition-versus-specialization"><a class="docs-heading-anchor" href="#Total-inhibition-versus-specialization">Total inhibition versus specialization</a><a id="Total-inhibition-versus-specialization-1"></a><a class="docs-heading-anchor-permalink" href="#Total-inhibition-versus-specialization" title="Permalink"></a></h2><p>The E mean rate depends on <code>w₁+w₂</code>, so similar sum curves indicate similar overall stabilization. By contrast, <code>w₁−w₂</code> measures how differently the two inhibitory neurons are weighted. The covariance-dominated rule separates the weights much faster despite the matched sum timescale.</p><pre><code class="language-julia hljs">sum_panel = plot(;ylabel=&quot;w₁+w₂&quot;,legend=:bottomright)
+difference_panel = plot(;xlabel=&quot;time (hours)&quot;,ylabel=&quot;w₁−w₂&quot;,
+    legend=:bottomright)
+for configuration in configurations
+  result = configuration.result
+  color = first(configuration.colors)
+  plot!(sum_panel,result.weight_times./3600,result.w₁.+result.w₂;
+      label=configuration.name,color=color,linewidth=2)
+  plot!(difference_panel,result.weight_times./3600,result.w₁.-result.w₂;
+      label=configuration.name,color=color,linewidth=2)
+end
+hline!(sum_panel,[prediction_rate.w₁+prediction_rate.w₂];
+    label=&quot;theory (both rules)&quot;,color=:black,linestyle=:dash)
+hline!(difference_panel,[prediction_rate.w₁-prediction_rate.w₂];
+    label=&quot;theory (both rules)&quot;,color=:black,linestyle=:dash)
+sum_difference_figure = plot(sum_panel,difference_panel;layout=(2,1),
+    size=(850,650),left_margin=5Plots.mm,bottom_margin=4Plots.mm)
+sum_difference_figure</code></pre><img src="29f52a1e.svg" alt="Example block output"/><p>Eight hours is only about one difference timescale for the rate-dominated rule.</p><div class="admonition is-info" id="Difference-timescale-fd4b2f831de6b579"><header class="admonition-header">Difference timescale<a class="admonition-anchor" href="#Difference-timescale-fd4b2f831de6b579" title="Permalink"></a></header><div class="admonition-body"><p>With the matched sum timescales used above, the rate-dominated rule has <code>τ_difference ≈ 7.88 hours</code>.</p></div></div><p>Therefore, <code>w₁</code> and <code>w₂</code> can still be far from the predicted fixed point even after the sum has stabilized.</p><h2 id="Comparing-the-rules-at-the-same-learning-rate"><a class="docs-heading-anchor" href="#Comparing-the-rules-at-the-same-learning-rate">Comparing the rules at the same learning rate</a><a id="Comparing-the-rules-at-the-same-learning-rate-1"></a><a class="docs-heading-anchor-permalink" href="#Comparing-the-rules-at-the-same-learning-rate" title="Permalink"></a></h2><p>The comparison above deliberately set the learning rate of the rate-dominated to a value that matched the convergence time of the covariance-dominated rule. What happens if we instead give both rules the same learning rate, <code>η = 3E-6</code>?</p><p>We keep all other parameters unchanged and simulate only the rate-dominated rule again. The covariance-dominated rule already uses this learning rate, so we reuse <code>result_covariance</code>. Both runs use the same <code>recording_interval</code> as every other figure in this example. Note that changing <code>η</code> rescales the plasticity dynamics but leaves the analytical fixed points unchanged.</p><pre><code class="language-julia hljs">rule_rate_equal_learning = plasticity_for_target_rate(
+    η_covariance,rule_rate.B,rule_rate.γ)
+prediction_rate_equal_learning = motif_predictions(rule_rate_equal_learning)
+result_rate_equal_learning = simulate_motif(rule_rate_equal_learning;
+    simulation_duration=simulation_duration,
+    recording_interval=recording_interval,seed=1);</code></pre><p>The rate-dominated rule now has <code>τ_sum ≈ 24.6 seconds</code>, compared with about 17.4 minutes for the covariance-dominated rule. Its E rate therefore converges to the 25 Hz target extremely quickly.</p><p>Weight specialization still takes longer than rate stabilization: the rate-dominated rule&#39;s difference timescale is about 11.1 minutes. Given enough time, its individual weights also converge around the expected values, <code>w₁* = 0.171875</code> and <code>w₂* = 0.015625</code>.</p><pre><code class="language-julia hljs">equal_learning_configurations = (
+  (name=&quot;Rate-dominated&quot;,result=result_rate_equal_learning,
+    colors=(:darkgreen,:seagreen)),
+  (name=&quot;Covariance-dominated&quot;,result=result_covariance,
+    colors=(:purple,:orchid)),
+)
+equal_learning_rate_panel = plot(;
+    xlabel=&quot;time (minutes)&quot;,ylabel=&quot;E rate (Hz)&quot;,
+    title=&quot;Initial stabilization: same learning rate&quot;,
+    xlim=(0,10),ylim=(0,45),legend=:bottomright)
+equal_learning_full_rate_panel = plot(;
+    xlabel=&quot;time (hours)&quot;,ylabel=&quot;E rate (Hz)&quot;,
+    title=&quot;Rate evolution over the full simulation&quot;,
+    xlim=(0,simulation_duration/3600),ylim=(0,45),legend=:topright)
+equal_learning_weight_panel = plot(;
+    xlabel=&quot;time (hours)&quot;,ylabel=&quot;inhibitory weight&quot;,
+    title=&quot;Long-term inhibitory weights&quot;,
+    ylim=(0,0.22),legend=:outerright)
+
+for configuration in equal_learning_configurations
+  result = configuration.result
+  color₁,color₂ = configuration.colors
+  plot!(equal_learning_rate_panel,result.rate_times./60,result.rates_e;
+      label=configuration.name,color=color₁,linewidth=2)
+  plot!(equal_learning_full_rate_panel,result.rate_times./3600,result.rates_e;
+      label=configuration.name,color=color₁,linewidth=2)
+  plot!(equal_learning_weight_panel,result.weight_times./3600,result.w₁;
+      label=configuration.name*&quot;: w₁&quot;,color=color₁,linewidth=2)
+  plot!(equal_learning_weight_panel,result.weight_times./3600,result.w₂;
+      label=configuration.name*&quot;: w₂&quot;,color=color₂,linewidth=2)
+end
+hline!(equal_learning_rate_panel,[prediction_rate_equal_learning.r_E];
+    label=&quot;theory (both rules)&quot;,color=:black,linestyle=:dash)
+hline!(equal_learning_full_rate_panel,[prediction_rate_equal_learning.r_E];
+    label=&quot;theory (both rules)&quot;,color=:black,linestyle=:dash)
+hline!(equal_learning_weight_panel,[prediction_rate_equal_learning.w₁];
+    label=&quot;theory: w₁&quot;,color=:black,linestyle=:dash)
+hline!(equal_learning_weight_panel,[prediction_rate_equal_learning.w₂];
+    label=&quot;theory: w₂&quot;,color=:black,linestyle=:dash)
+equal_learning_figure = plot(
+    equal_learning_rate_panel,equal_learning_full_rate_panel,
+    equal_learning_weight_panel;layout=(3,1),
+    size=(1000,1100),left_margin=5Plots.mm,bottom_margin=4Plots.mm)
+equal_learning_figure</code></pre><img src="08c00998.svg" alt="Example block output"/><p>The top panel zooms into the first ten minutes, using the same rate bins for both rules. The middle panel shows the rate evolution over all eight simulated hours. The bottom panel shows the inhibitory weights over the same full duration, confirming that the fast rate transient is followed by convergence to their fixed points, with fluctuations around the analytical predictions.</p><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../05_structured_inhibition_motifs/">« Structured inhibition in two-neuron motifs</a><a class="docs-footer-nextpage" href="../z01_test_plasticity/">Plasticity rule tests »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.19.0 on <span class="colophon-date" title="Wednesday 7 October 2026 11:23">Wednesday 7 October 2026</span>. Using Julia version 1.12.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
