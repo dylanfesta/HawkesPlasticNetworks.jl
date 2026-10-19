@@ -37,6 +37,11 @@ Literate.markdown(
     flavor=Literate.DocumenterFlavor(),
 )
 Literate.markdown(
+    joinpath(docs_dir,"literate","07_winner_take_all_self_stabilizing_plasticity.jl"),
+    generated_dir;
+    flavor=Literate.DocumenterFlavor(),
+)
+Literate.markdown(
     joinpath(docs_dir,"literate","z01_test_plasticity.jl"),
     generated_dir;
     flavor=Literate.DocumenterFlavor(),
@@ -73,6 +78,8 @@ makedocs(;
                 "generated/05_structured_inhibition_motifs.md",
             "Weight specialization in a three-neuron inhibitory motif" =>
                 "generated/06_three_neuron_inhibitory_motif.md",
+            "Winner-take-all self-stabilizing plasticity" =>
+                "generated/07_winner_take_all_self_stabilizing_plasticity.md",
             "Plasticity rule tests" =>
                 "generated/z01_test_plasticity.md",
             "Plasticity predictions in two-neuron motifs" =>

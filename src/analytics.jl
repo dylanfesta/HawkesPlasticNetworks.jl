@@ -93,7 +93,11 @@ function get_motif_coef_M10(
     pop_ij::AbstractPopulation)
   τplus = stdp.τ_plus
   τker,sign = get_tau_and_sign(pop_ij)
-  scale_plus = (stdp.B+1.0)/2.0
+  if stdp.inverted
+    scale_plus = (stdp.B-1.0)/2.0
+  else
+    scale_plus = (stdp.B+1.0)/2.0
+  end
   return sign*scale_plus/(τker+τplus)
 end
 
@@ -102,7 +106,11 @@ function get_motif_coef_M01(
     pop_ji::AbstractPopulation)
   τminus = stdp.γ*stdp.τ_plus
   τker,sign = get_tau_and_sign(pop_ji)
-  scale_minus = (stdp.B-1.0)/2.0
+  if stdp.inverted
+    scale_minus = (stdp.B+1.0)/2.0
+  else
+    scale_minus = (stdp.B-1.0)/2.0
+  end
   return sign*scale_minus/(τker+τminus)
 end
 
@@ -319,7 +327,8 @@ function analytic_alphaprepost_rule(
   return PlasticityAsymmetricSTDP(
     plasticity.η,plasticity.B,alphas.αpre,alphas.αpost,
     plasticity.τ_plus,plasticity.γ,mask_weights;
-    weight_min=plasticity.weight_min,weight_max=plasticity.weight_max)
+    weight_min=plasticity.weight_min,weight_max=plasticity.weight_max,
+    inverted=plasticity.inverted)
 end
 
 

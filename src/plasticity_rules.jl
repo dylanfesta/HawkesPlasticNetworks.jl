@@ -259,7 +259,7 @@ end
     PlasticityAsymmetricSTDP(
         η::Real, B::Real, αpre::Real, αpost::Real,
         τ_plus::Real, γ::Real, weights::Matrix{Float64};
-        weight_min::Real=0.0, weight_max::Real=Inf)
+        weight_min::Real=0.0, weight_max::Real=Inf, inverted::Bool=false)
 
 Construct an asymmetric pair-based STDP rule for `weights`, whose shape is
 `n_post × n_pre`. Positions that are exactly zero at construction are not 
@@ -281,6 +281,11 @@ each pre- and post-synaptic spike, respectively.
 
 `γ` sets the relative time constant for depression `γ τ_plus`.
 
+With `inverted=true`, post-before-pre pairs potentiate with timescale
+`γ τ_plus`, and pre-before-post pairs depress with timescale `τ_plus`.
+The integrated window remains `B`: the left and right signed areas are
+`(1+B)/2` and `(B-1)/2`, respectively. `αpre` and `αpost` keep their signs.
+
 """
 struct PlasticityAsymmetricSTDP{
     TP<:Trace,TM<:Trace} <: AbstractPlasticitySTDP
@@ -290,6 +295,7 @@ struct PlasticityAsymmetricSTDP{
   αpost::Float64
   τ_plus::Float64
   γ::Float64
+  inverted::Bool
   weight_min::Float64
   weight_max::Float64
   trace_pre_plus::TP
@@ -300,7 +306,7 @@ end
 function PlasticityAsymmetricSTDP(
     η::Real,B::Real,αpre::Real,αpost::Real,τ_plus::Real,γ::Real,
     weights::Matrix{Float64};
-    weight_min::Real=0.0,weight_max::Real=Inf)
+    weight_min::Real=0.0,weight_max::Real=Inf,inverted::Bool=false)
   if !(-1 <= B <= 1)
     throw(ArgumentError("B must be between -1 and 1"))
   end
@@ -323,7 +329,7 @@ function PlasticityAsymmetricSTDP(
 
   return PlasticityAsymmetricSTDP(
     Float64(η),Float64(B),Float64(αpre),Float64(αpost),
-    Float64(τ_plus),Float64(γ),Float64(weight_min),Float64(weight_max),
+    Float64(τ_plus),Float64(γ),inverted,Float64(weight_min),Float64(weight_max),
     Trace(Float64(τ_plus),n_pre),
     Trace(Float64(γ*τ_plus),n_post),
     zero_weight_mask)
@@ -359,7 +365,11 @@ function apply_plasticity!(
   # the current spike is written into them.
   if pre_fired
     decay_post = trace_decay(t_fire,plast.trace_post_minus)
-    trace_scale = ((plast.B-1.0)/2.0)*decay_post
+    if plast.inverted
+      trace_scale = ((plast.B+1.0)/2.0)*decay_post
+    else
+      trace_scale = ((plast.B-1.0)/2.0)*decay_post
+    end
     _apply_stdp_single_trace!(
       weights,mask,plast.trace_post_minus.val,neuron_fire_idx,η,plast.αpre,
       trace_scale,plast.weight_min,plast.weight_max)
@@ -367,7 +377,11 @@ function apply_plasticity!(
 
   if post_fired
     decay_pre = trace_decay(t_fire,plast.trace_pre_plus)
-    trace_scale = ((plast.B+1.0)/2.0)*decay_pre
+    if plast.inverted
+      trace_scale = ((plast.B-1.0)/2.0)*decay_pre
+    else
+      trace_scale = ((plast.B+1.0)/2.0)*decay_pre
+    end
     _apply_stdp_single_trace!(
       transpose(weights),transpose(mask),plast.trace_pre_plus.val,
       neuron_fire_idx,η,plast.αpost,

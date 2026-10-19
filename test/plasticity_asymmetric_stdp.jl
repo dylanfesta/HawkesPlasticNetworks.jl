@@ -74,11 +74,60 @@ function refresh_allocated!(
 end
 
 @testset "PlasticityAsymmetricSTDP" begin
+    @testset "Inverted spike-pair window" begin
+        for (first_label,last_label,expected_delta) in (
+            (:pre,:post,-0.001*0.2/0.02*exp(-1.0)),
+            (:post,:pre,0.001*0.8/0.2*exp(-0.1)))
+            weights = ones(1,1)
+            rule = HPN.PlasticityAsymmetricSTDP(
+                0.001,0.6,0.0,0.0,0.02,10.0,weights;inverted=true)
+            connection = HPN.ConnectionWithWeights(weights,:post,:pre,(rule,),true)
+            @test rule.inverted
+            @test isapprox(rule.trace_pre_plus.τ,0.02;atol=1e-12)
+            @test isapprox(rule.trace_post_minus.τ,0.2;atol=1e-12)
+            @test HPN.apply_plasticity!(rule,connection,0.0,first_label,1) === nothing
+            @test HPN.apply_plasticity!(rule,connection,0.02,last_label,1) === nothing
+            @test isapprox(weights[1,1],1.0+expected_delta;atol=1e-12,rtol=1e-12)
+        end
+
+        weights = [0.0 0.5]
+        rule = HPN.PlasticityAsymmetricSTDP(
+            1.0,0.6,-0.3,0.2,0.02,10.0,weights;
+            inverted=true,weight_max=1.0)
+        connection = HPN.ConnectionWithWeights(weights,:post,:pre,(rule,),true)
+        weights[1,1] = 0.4
+        rule.trace_pre_plus.val .= 100.0
+        HPN.apply_plasticity!(rule,connection,0.0,:post,1)
+        @test weights == [0.4 0.0]
+        rule.trace_post_minus.val .= 100.0
+        HPN.apply_plasticity!(rule,connection,0.0,:pre,2)
+        @test weights == [0.4 1.0]
+        @test HPN.reset!(rule) === nothing
+        @test all(iszero,rule.trace_pre_plus.val)
+        @test all(iszero,rule.trace_post_minus.val)
+        @test rule.inverted
+        @test rule.zero_weight_mask == Bool[1 0]
+        # Inverting timing does not invert the independent rate terms.
+        weights[1,2] = 0.5
+        HPN.apply_plasticity!(rule,connection,0.0,:pre,2)
+        @test isapprox(weights[1,2],0.2;atol=1e-12)
+        HPN.reset!(rule)
+        HPN.apply_plasticity!(rule,connection,0.0,:post,1)
+        @test isapprox(weights[1,2],0.4;atol=1e-12)
+        apply_allocated!(rule,connection,:post,1)
+        @test apply_allocated!(rule,connection,:post,1) == 0
+        empty_rule = HPN.PlasticityAsymmetricSTDP(
+            0.1,0.6,0.0,0.0,0.02,10.0,zeros(0,3);inverted=true)
+        @test size(empty_rule.zero_weight_mask) == (0,3)
+    end
+
     @testset "Construction and validation" begin
         weights = [0.0 1.0 2.0; 3.0 0.0 4.0]
         plast = HPN.PlasticityAsymmetricSTDP(
             0.1,0.0,-0.2,0.3,2.0,1.5,weights;
             weight_min=0.0,weight_max=5.0)
+
+        @test !plast.inverted
 
         @test length(plast.trace_pre_plus) == 3
         @test length(plast.trace_post_minus) == 2

@@ -5,6 +5,29 @@ const HPN_ANALYTICS = HawkesPlasticNetworks
     target_rate = (wexc=0.5f0,rexc=25)
     parameters = (rinh=80,hexc=40.0,B=0,M10=-2.0f0,M01=3.0)
 
+    @testset "Inverted asymmetric motifs and rule reconstruction" begin
+        post = HPN_ANALYTICS.PopulationExpKernelExcitatory(1,0.03;label="post")
+        pre = HPN_ANALYTICS.PopulationExpKernelInhibitory(1,0.03;label="pre")
+        rule = HPN_ANALYTICS.PlasticityAsymmetricSTDP(
+            1e-6,0.6,-30.0,0.0,0.02,10.0,ones(1,1);inverted=true)
+        @test isapprox(HPN_ANALYTICS.get_motif_coef_M10(rule,pre),4.0;
+            atol=1e-12,rtol=1e-12)
+        @test isapprox(HPN_ANALYTICS.get_motif_coef_M10(rule,post),-4.0;
+            atol=1e-12,rtol=1e-12)
+        @test isapprox(HPN_ANALYTICS.get_motif_coef_M01(rule,post),0.8/0.23;
+            atol=1e-12,rtol=1e-12)
+        @test isapprox(HPN_ANALYTICS.get_motif_coef_M01(rule,pre),-0.8/0.23;
+            atol=1e-12,rtol=1e-12)
+        rebuilt = HPN_ANALYTICS.analytic_alphaprepost_rule(
+            rule,post,pre,target_zero,target_rate;rinh=80.0,hexc=40.0)
+        @test rebuilt.inverted
+        @test rebuilt.B == rule.B
+        @test isapprox(HPN_ANALYTICS.get_motif_coef_M10(rebuilt,pre),4.0;
+            atol=1e-12,rtol=1e-12)
+        @test all(iszero,rebuilt.trace_pre_plus.val)
+        @test all(iszero,rebuilt.trace_post_minus.val)
+    end
+
     @testset "Two-target solution" begin
         alphas = HPN_ANALYTICS.analytic_alphaprepost(
             target_zero,target_rate;parameters...)

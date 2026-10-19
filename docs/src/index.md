@@ -22,6 +22,7 @@ below; the API index lists the currently available components.
 - [Excitatory-only networks](generated/04_excitatory_only_networks.md)
 - [Structured inhibition in two-neuron motifs](generated/05_structured_inhibition_motifs.md)
 - [Weight specialization in a three-neuron inhibitory motif](generated/06_three_neuron_inhibitory_motif.md)
+- [Winner-take-all self-stabilizing plasticity](generated/07_winner_take_all_self_stabilizing_plasticity.md)
 
 ## Tests on plasticity
 
