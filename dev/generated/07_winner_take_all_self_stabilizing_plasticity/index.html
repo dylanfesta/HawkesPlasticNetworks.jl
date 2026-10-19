@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Winner-take-all self-stabilizing plasticity · HawkesPlasticNetworks.jl</title><meta name="title" content="Winner-take-all self-stabilizing plasticity · HawkesPlasticNetworks.jl"/><meta property="og:title" content="Winner-take-all self-stabilizing plasticity · HawkesPlasticNetworks.jl"/><meta property="twitter:title" content="Winner-take-all self-stabilizing plasticity · HawkesPlasticNetworks.jl"/><meta name="description" content="Documentation for HawkesPlasticNetworks.jl."/><meta property="og:description" content="Documentation for HawkesPlasticNetworks.jl."/><meta property="twitter:description" content="Documentation for HawkesPlasticNetworks.jl."/><meta property="og:url" content="https://dylanfesta.github.io/HawkesPlasticNetworks.jl/generated/07_winner_take_all_self_stabilizing_plasticity/"/><meta property="twitter:url" content="https://dylanfesta.github.io/HawkesPlasticNetworks.jl/generated/07_winner_take_all_self_stabilizing_plasticity/"/><link rel="canonical" href="https://dylanfesta.github.io/HawkesPlasticNetworks.jl/generated/07_winner_take_all_self_stabilizing_plasticity/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.63.2/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">HawkesPlasticNetworks.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../01_single_unit/">Single self-interacting unit</a></li><li><a class="tocitem" href="../02_ei_network/">One excitatory and one inhibitory unit</a></li><li><a class="tocitem" href="../03_homeostatic_stabilization/">Homeostatic stabilization</a></li><li><a class="tocitem" href="../04_excitatory_only_networks/">Excitatory-only networks</a></li><li><a class="tocitem" href="../05_structured_inhibition_motifs/">Structured inhibition in two-neuron motifs</a></li><li><a class="tocitem" href="../06_three_neuron_inhibitory_motif/">Weight specialization in a three-neuron inhibitory motif</a></li><li class="is-active"><a class="tocitem" href>Winner-take-all self-stabilizing plasticity</a><ul class="internal"><li><a class="tocitem" href="#Excitatory-winner-take-all"><span>Excitatory winner-take-all</span></a></li><li><a class="tocitem" href="#Inhibitory-winner-take-all"><span>Inhibitory winner-take-all</span></a></li></ul></li><li><a class="tocitem" href="../z01_test_plasticity/">Plasticity rule tests</a></li><li><a class="tocitem" href="../z02_test_plasticity_motifs/">Plasticity predictions in two-neuron motifs</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li class="is-active"><a href>Winner-take-all self-stabilizing plasticity</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Winner-take-all self-stabilizing plasticity</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/dylanfesta/HawkesPlasticNetworks.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/dylanfesta/HawkesPlasticNetworks.jl/blob/main/docs/literate/07_winner_take_all_self_stabilizing_plasticity.jl#" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Winner-take-all-self-stabilizing-plasticity"><a class="docs-heading-anchor" href="#Winner-take-all-self-stabilizing-plasticity">Winner-take-all self-stabilizing plasticity</a><a id="Winner-take-all-self-stabilizing-plasticity-1"></a><a class="docs-heading-anchor-permalink" href="#Winner-take-all-self-stabilizing-plasticity" title="Permalink"></a></h1><h2 id="Excitatory-winner-take-all"><a class="docs-heading-anchor" href="#Excitatory-winner-take-all">Excitatory winner-take-all</a><a id="Excitatory-winner-take-all-1"></a><a class="docs-heading-anchor-permalink" href="#Excitatory-winner-take-all" title="Permalink"></a></h2><p>Ten independent excitatory neurons fire at 50 Hz and project to one postsynaptic neuron with a nominal target of 50 Hz. Its external drive is only 5 Hz. All ten plastic weights start at 0.001; there is no feedback or recurrent connectivity. Spike fluctuations break the initial symmetry.</p><p>Run from the repository with the documentation environment:</p><pre><code class="language-sh hljs">julia --project=docs docs/literate/07_winner_take_all_self_stabilizing_plasticity.jl</code></pre><p>Times are in seconds, rates in Hz, and weights are integrated kernel strengths.</p><pre><code class="language-julia hljs">using Random
+using HawkesPlasticNetworks
+const H = HawkesPlasticNetworks
+
+const N = 10
+const r_pre = 50.0
+const r_target = 50.0
+const h_post = r_target/10
+const τ_syn = 30e-3
+const τ_plus = 20e-3
+const γ = 10.0
+const τ_minus = γ*τ_plus
+const A_plus = 0.2
+const A_minus = 0.8
+const B = A_plus-A_minus
+const η = 1e-6
+const αpre = -B*r_target
+const αpost = 0.0
+const weight_start = 0.001
+const simulation_duration = 16*3600.0
+const recording_interval = 60.0
+const shared_weight_target = (r_target-h_post)/(N*r_pre)
+const M = A_plus/(τ_syn+τ_plus)
+const winner_weight = (αpre+B*h_post)/(-B*r_pre-M)
+const winner_rate = h_post+r_pre*winner_weight;</code></pre><h3 id="STDP-kernel"><a class="docs-heading-anchor" href="#STDP-kernel">STDP kernel</a><a id="STDP-kernel-1"></a><a class="docs-heading-anchor-permalink" href="#STDP-kernel" title="Permalink"></a></h3><p>This is the asymmetric STDP window used in the simulation, with the overall learning rate <span>$\eta=10^{-6}$</span> factored out. For <span>$\Delta t=t_{\mathrm{post}}-t_{\mathrm{pre}}$</span>, causal pairs potentiate and reverse-order pairs depress:</p><p class="math-container">\[L(\Delta t)=
+\begin{cases}
+-\dfrac{0.8}{0.2}\exp(\Delta t/0.2), &amp; \Delta t&lt;0,\\[4pt]
+\dfrac{0.2}{0.02}\exp(-\Delta t/0.02), &amp; \Delta t&gt;0.
+\end{cases}\]</p><p>Depression lasts ten times longer and has four times the area of potentiation. The integrated window is <span>$B=A_+-A_-=-0.6$</span>. The plot uses milliseconds.</p><pre><code class="language-julia hljs">using Plots
+
+negative_lags = range(-6τ_minus,0.0;length=1201)
+positive_lags = range(0.0,6τ_minus;length=1201)
+depression = @. -A_minus/τ_minus*exp(negative_lags/τ_minus)
+potentiation = @. A_plus/τ_plus*exp(-positive_lags/τ_plus)
+stdp_figure = plot(
+    1000 .* negative_lags,depression;
+    color=:red,fillrange=0,fillalpha=0.25,linewidth=3,label=false,
+    xlabel=&quot;Spike lag Δt = t_post − t_pre (ms)&quot;,
+    ylabel=&quot;Learning window L(Δt) (s⁻¹)&quot;,
+    title=&quot;Asymmetric STDP: broad depression, brief potentiation&quot;,
+    xlims=(-250,250),legend=false,size=(850,450),
+    left_margin=6Plots.mm,bottom_margin=3Plots.mm)
+plot!(stdp_figure,1000 .* positive_lags,potentiation;
+    color=:blue,fillrange=0,fillalpha=0.25,linewidth=3,label=false)
+hline!(stdp_figure,[0.0];color=:black,linewidth=1,label=false);
+
+stdp_figure</code></pre><img src="6f559438.svg" alt="Example block output"/><h3 id="Rate-regulation-and-competition"><a class="docs-heading-anchor" href="#Rate-regulation-and-competition">Rate regulation and competition</a><a id="Rate-regulation-and-competition-1"></a><a class="docs-heading-anchor-permalink" href="#Rate-regulation-and-competition" title="Permalink"></a></h3><p>With <span>$\alpha_{\mathrm{pre}}=-B r_{\mathrm{target}}=30$</span> and <span>$\alpha_{\mathrm{post}}=0$</span>, a first-order approximation gives</p><p class="math-container">\[\langle\dot w_i\rangle\approx\eta r_{\mathrm{pre}}
+\left[B(r_{\mathrm{post}}-r_{\mathrm{target}})+M w_i\right],
+\qquad M=\frac{A_+}{\tau_{\mathrm{syn}}+\tau_+}=4\,\mathrm{s}^{-1}.\]</p><p>The negative <span>$B$</span> regulates total excitation. The causal term <span>$M w_i$</span> favors stronger synapses, amplifying differences until weaker weights approach zero. Here <span>$|B|r_{\mathrm{pre}}&gt;M$</span>, so total excitation remains stable even with a single active synapse. Correlations can shift the learned rate above the nominal target. The difference timescale is about 1.39 hours; we run for 16.</p><p>Once only one synapse remains, <span>$r_{\mathrm{post}}=h+r_{\mathrm{pre}}w$</span>. Setting its rate and causal-correlation drift to zero gives</p><p class="math-container">\[0=\alpha_{\mathrm{pre}}+Bh+(Br_{\mathrm{pre}}+M)w_*,
+\qquad
+w_* = \frac{\alpha_{\mathrm{pre}}+Bh}{-Br_{\mathrm{pre}}-M}
+= \frac{27}{26}\approx1.03846.\]</p><p>This slow-learning fixed point is stable because <span>$Br_{\mathrm{pre}}+M=-26&lt;0$</span>. Its predicted postsynaptic rate is <span>$h+r_{\mathrm{pre}}w_*\approx56.92$</span> Hz. The rule is self-regulating: no upper weight saturation is needed, only the nonnegative lower bound.</p><h3 id="Build-the-feedforward-network"><a class="docs-heading-anchor" href="#Build-the-feedforward-network">Build the feedforward network</a><a id="Build-the-feedforward-network-1"></a><a class="docs-heading-anchor-permalink" href="#Build-the-feedforward-network" title="Permalink"></a></h3><p>In <code>post &lt;- pre</code> order, the plastic matrix has one row and ten columns. The presynaptic population has constant input and no incoming connections. Weights stay nonnegative with no upper cap. Their nonzero initialization keeps all ten synapses eligible for plasticity, including after reaching zero.</p><pre><code class="language-julia hljs">function simulate_competition(;
+    simulation_duration::Real=simulation_duration,
+    recording_interval::Real=recording_interval,seed::Integer=0)
+  Random.seed!(seed)
+  population_post = H.PopulationExpKernelExcitatory(1,τ_syn;label=&quot;post&quot;)
+  population_pre = H.PopulationExpKernelExcitatory(N,τ_syn;label=&quot;pre&quot;)
+  weights = fill(weight_start,1,N)
+  rule = H.PlasticityAsymmetricSTDP(
+      η,B,αpre,αpost,τ_plus,γ,weights;weight_min=0.0)
+  connection = H.ConnectionWithWeights(
+      population_post,weights,population_pre;plasticity_rules=(rule,))
+  connected_post = H.ConnectedPopulationExpKernel(
+      population_post,[h_post],(connection,population_pre))
+  connected_pre = H.ConnectedPopulationExpKernel(
+      population_pre,fill(r_pre,N))
+  recorder_weights = H.WeightMatrixRecorder(
+      connection.weights,recording_interval,simulation_duration)
+  recorder_post = H.RecorderPopulationRate(
+      population_post,simulation_duration;Δt=recording_interval)
+  recorder_pre = H.RecorderPopulationRate(
+      population_pre,simulation_duration;Δt=recording_interval)
+  network = H.RecurrentNetworkExpKernel(
+      (connected_post,connected_pre),
+      (recorder_weights,recorder_post,recorder_pre))
+
+  H.reset!(network)
+  H.reset!(rule)
+  initial_weights = copy(connection.weights)
+  time_now = 0.0
+  while time_now &lt; simulation_duration
+    time_now = H.dynamics_step!(time_now,network)
+  end
+
+  # Weight snapshots are event-triggered; keep their own time vector.
+  # Prepend the exact initial state rather than assigning it a spike time.
+  content_weights = H.get_content(recorder_weights)
+  content_post = H.get_content(recorder_post)
+  content_pre = H.get_content(recorder_pre)
+  return (
+      weight_times=vcat(0.0,content_weights.times),
+      weights=vcat(initial_weights,content_weights.weights[:,1,:]),
+      final_weights=copy(connection.weights),
+      rate_times=content_post.times,rates_post=content_post.rates,
+      rates_pre=content_pre.rates,
+      final_input_pre=copy(connected_pre.input),
+      final_input_post=copy(connected_post.input),
+      weight_min=rule.weight_min,weight_max=rule.weight_max)
+end;</code></pre><h3 id="Run-the-network-and-follow-the-ten-weights"><a class="docs-heading-anchor" href="#Run-the-network-and-follow-the-ten-weights">Run the network and follow the ten weights</a><a id="Run-the-network-and-follow-the-ten-weights-1"></a><a class="docs-heading-anchor-permalink" href="#Run-the-network-and-follow-the-ten-weights" title="Permalink"></a></h3><p>Navy curves show the ten weights; the green line marks the single-winner fixed point <span>$w_*\approx1.03846$</span>. The gray dashed line marks equal sharing at the nominal target: <span>$(r_{\mathrm{target}}-h)/(Nr_{\mathrm{pre}})=0.09$</span>.</p><pre><code class="language-julia hljs">result = simulate_competition()
+weight_figure = plot(
+    result.weight_times./3600,result.weights;
+    color=:navy,linewidth=3,label=false,legend=false,
+    xlabel=&quot;time (hours)&quot;,ylabel=&quot;excitatory weight&quot;,
+    title=&quot;Ten initially identical synapses&quot;,
+    size=(1000,550),left_margin=6Plots.mm,bottom_margin=4Plots.mm)
+hline!(weight_figure,[winner_weight];
+    color=:green,linewidth=3,label=false)
+hline!(weight_figure,[shared_weight_target];
+    color=:gray,linestyle=:dash,linewidth=2,label=false);
+
+weight_figure</code></pre><img src="881bddf0.svg" alt="Example block output"/><h2 id="Inhibitory-winner-take-all"><a class="docs-heading-anchor" href="#Inhibitory-winner-take-all">Inhibitory winner-take-all</a><a id="Inhibitory-winner-take-all-1"></a><a class="docs-heading-anchor-permalink" href="#Inhibitory-winner-take-all" title="Permalink"></a></h2><p>Ten independent inhibitory neurons now fire at 10 Hz, with constant external inputs and no connections from E. The postsynaptic drive remains 100 Hz, above the 50 Hz target: inhibition must remove the excess activity. The initial weights, recording interval, and 16-hour duration are unchanged.</p><pre><code class="language-julia hljs">const r_I = 10.0
+const η_inhibitory = 4e-5
+const B_inhibitory = 0.6
+const αpre_inhibitory = -B_inhibitory*r_target
+const h_post_inhibitory = 2*r_target
+const A_left_inhibitory = (1+B_inhibitory)/2
+const A_right_inhibitory = (1-B_inhibitory)/2
+const M_inhibitory = A_right_inhibitory/(τ_syn+τ_plus)
+const shared_target_inhibitory = (h_post_inhibitory-r_target)/(N*r_I);</code></pre><h3 id="Inhibitory-STDP-kernel"><a class="docs-heading-anchor" href="#Inhibitory-STDP-kernel">Inhibitory STDP kernel</a><a id="Inhibitory-STDP-kernel-1"></a><a class="docs-heading-anchor-permalink" href="#Inhibitory-STDP-kernel" title="Permalink"></a></h3><p>Invert the asymmetric window: post-before-pre pairs potentiate over 200 ms, while pre-before-post pairs depress over 20 ms. The positive left area is 0.8 and the negative right area is 0.2, giving integrated area <span>$B=0.6$</span>. Negative <span>$\alpha_{\mathrm{pre}}=-30$</span> balances that positive rate bias. <code>inverted=true</code> changes the timing signs while keeping <code>B</code> equal to the area:</p><p class="math-container">\[L_I(\Delta t)=
+\begin{cases}
+\dfrac{0.8}{0.2}\exp(\Delta t/0.2), &amp; \Delta t&lt;0,\\[4pt]
+-\dfrac{0.2}{0.02}\exp(-\Delta t/0.02), &amp; \Delta t&gt;0.
+\end{cases}\]</p><pre><code class="language-julia hljs">inhibitory_stdp_figure = plot(
+    1000 .* negative_lags,
+    A_left_inhibitory/τ_minus .* exp.(negative_lags./τ_minus);
+    color=:blue,fillrange=0,fillalpha=0.25,linewidth=3,label=false,legend=false,
+    xlabel=&quot;Spike lag Δt = t_post − t_pre (ms)&quot;,
+    ylabel=&quot;Learning window Lᵢ(Δt) (s⁻¹)&quot;,
+    title=&quot;Inverted STDP: broad potentiation, brief depression&quot;,
+    xlims=(-250,250),size=(850,450),
+    left_margin=6Plots.mm,bottom_margin=3Plots.mm)
+plot!(inhibitory_stdp_figure,1000 .* positive_lags,
+    -A_right_inhibitory/τ_plus .* exp.(-positive_lags./τ_plus);
+    color=:red,fillrange=0,fillalpha=0.25,linewidth=3,label=false)
+hline!(inhibitory_stdp_figure,[0.0];color=:black,linewidth=1,label=false);
+
+inhibitory_stdp_figure</code></pre><img src="7d42a453.svg" alt="Example block output"/><h3 id="Regulation-and-competition"><a class="docs-heading-anchor" href="#Regulation-and-competition">Regulation and competition</a><a id="Regulation-and-competition-1"></a><a class="docs-heading-anchor-permalink" href="#Regulation-and-competition" title="Permalink"></a></h3><p>Stronger inhibition suppresses causal postsynaptic spikes and therefore receives less timing-dependent depression. The causal coefficient is now positive, <span>$M_I=0.2/(\tau_{\mathrm{syn}}+\tau_+)=4\,\mathrm{s}^{-1}$</span>:</p><p class="math-container">\[\langle\dot w_i\rangle\approx\eta_I r_I
+\left[B(r_E-r_{\mathrm{target}})+M_Iw_i\right],
+\qquad r_E\approx h_E-r_I\sum_i w_i.\]</p><p>Above target inhibition strengthens; below target it weakens. Meanwhile, differences grow as <span>$d(w_i-w_j)/dt=\eta_I r_IM_I(w_i-w_j)$</span>: fluctuations select stronger synapses instead of being averaged away. The sum is stable in this approximation when <span>$NBr_I&gt;M_I$</span>. We impose only a zero lower bound; no upper weight saturation is needed because the rate feedback is self-regulating. At 10 Hz, <span>$\eta_I=4\times10^{-5}$</span> gives a difference timescale of about 10.4 minutes. Strong single inhibitory inputs can rectify E, so the linear approximation does not give a reliable numerical single-winner weight at this low input rate.</p><h3 id="Single-winner-estimate-with-rate-rectification"><a class="docs-heading-anchor" href="#Single-winner-estimate-with-rate-rectification">Single-winner estimate with rate rectification</a><a id="Single-winner-estimate-with-rate-rectification-1"></a><a class="docs-heading-anchor-permalink" href="#Single-winner-estimate-with-rate-rectification" title="Permalink"></a></h3><p>For one surviving input, retain the clipped intensity <span>$[h_E-wx_I]_+$</span>. Set <span>$q=r_I\tau_{\mathrm{syn}}$</span>, <span>$a=\tau_{\mathrm{syn}}/\tau_+$</span>, and <span>$z=h_E\tau_{\mathrm{syn}}/w$</span>. For <span>$z&lt;1$</span>, averaging over the stationary Poisson-driven exponential trace gives</p><p class="math-container">\[r_E(w)=Kz^q,\qquad K=\frac{h_Ee^{-\gamma_{\mathrm{Euler}}q}}{\Gamma(q+2)},
+\qquad C=a\,\mathrm{Beta}(a,q+2).\]</p><p>The broad positive lobe samples the mean rate, while the short negative lobe samples the rate after an inhibitory spike. The resulting drift equation is</p><p class="math-container">\[0=\alpha_{\mathrm{pre}}+Kz^q\left[A_{\mathrm{left}}-
+A_{\mathrm{right}}Cz^a\right],\qquad
+w_*\approx26.21,\quad r_E^*\approx37.62\,\mathrm{Hz}.\]</p><p>Solve this scalar equation by bisection. This is a slow-learning estimate with one fixed synapse; it includes rate clipping but neglects losing weights and fluctuations of the winning weight.</p><pre><code class="language-julia hljs">using SpecialFunctions: gamma, beta
+
+function inhibitory_single_winner_prediction()
+  q = r_I*τ_syn
+  a = τ_syn/τ_plus
+  K = h_post_inhibitory*exp(-Float64(Base.MathConstants.eulergamma)*q)/gamma(q+2)
+  C = a*beta(a,q+2)
+  if αpre_inhibitory &gt;= 0.0
+    throw(ArgumentError(&quot;the single-winner estimate requires negative αpre&quot;))
+  end
+  if αpre_inhibitory+K*(A_left_inhibitory-A_right_inhibitory*C) &lt; 0.0
+    throw(ArgumentError(&quot;this estimate requires a fixed point with w ≥ h_E*τ_syn&quot;))
+  end
+  lower = 0.0
+  upper = 1.0
+  for _ in 1:100
+    z = (lower+upper)/2
+    drift = αpre_inhibitory+K*z^q*(A_left_inhibitory-A_right_inhibitory*C*z^a)
+    if drift &gt; 0.0
+      upper = z
+    else
+      lower = z
+    end
+  end
+  z = (lower+upper)/2
+  return (weight=h_post_inhibitory*τ_syn/z,rate=K*z^q)
+end;</code></pre><h3 id="Build-the-inhibitory-feedforward-network"><a class="docs-heading-anchor" href="#Build-the-inhibitory-feedforward-network">Build the inhibitory feedforward network</a><a id="Build-the-inhibitory-feedforward-network-1"></a><a class="docs-heading-anchor-permalink" href="#Build-the-inhibitory-feedforward-network" title="Permalink"></a></h3><p>The <code>E &lt;- I</code> matrix is plastic. I has only constant external input: there is no reciprocal connection and no adaptive-input callback.</p><pre><code class="language-julia hljs">function simulate_inhibitory_competition(;
+    inhibitory_rate::Real=r_I,learning_rate::Real=η_inhibitory,
+    simulation_duration::Real=simulation_duration,
+    recording_interval::Real=recording_interval,
+    seed::Integer=0)
+  Random.seed!(seed)
+  population_e = H.PopulationExpKernelExcitatory(1,τ_syn;label=&quot;e&quot;)
+  population_i = H.PopulationExpKernelInhibitory(N,τ_syn;label=&quot;i&quot;)
+  weights = fill(weight_start,1,N)
+  rule = H.PlasticityAsymmetricSTDP(
+      learning_rate,B_inhibitory,αpre_inhibitory,αpost,τ_plus,γ,weights;
+      weight_min=0.0,inverted=true)
+  connection_ei = H.ConnectionWithWeights(
+      population_e,weights,population_i;plasticity_rules=(rule,))
+  connected_e = H.ConnectedPopulationExpKernel(
+      population_e,[h_post_inhibitory],(connection_ei,population_i))
+  connected_i = H.ConnectedPopulationExpKernel(
+      population_i,fill(Float64(inhibitory_rate),N))
+  recorder_weights = H.WeightMatrixRecorder(
+      connection_ei.weights,recording_interval,simulation_duration)
+  recorder_e = H.RecorderPopulationRate(
+      population_e,simulation_duration;Δt=recording_interval)
+  recorder_i = H.RecorderPopulationRate(
+      population_i,simulation_duration;Δt=recording_interval)
+
+  network = H.RecurrentNetworkExpKernel(
+      (connected_e,connected_i),
+      (recorder_weights,recorder_e,recorder_i))
+  H.reset!(network)
+  H.reset!(rule)
+  initial_weights = copy(connection_ei.weights)
+  time_now = 0.0
+  while time_now &lt; simulation_duration
+    time_now = H.dynamics_step!(time_now,network)
+  end
+
+  content_weights = H.get_content(recorder_weights)
+  content_e = H.get_content(recorder_e)
+  content_i = H.get_content(recorder_i)
+  return (
+      weight_times=vcat(0.0,content_weights.times),
+      weights=vcat(initial_weights,content_weights.weights[:,1,:]),
+      final_weights=copy(connection_ei.weights),
+      rate_times=content_e.times,rates_post=content_e.rates,rates_pre=content_i.rates,
+      final_input_pre=copy(connected_i.input),
+      final_input_post=copy(connected_e.input),
+      weight_min=rule.weight_min,weight_max=rule.weight_max)
+end;</code></pre><h3 id="Run-the-inhibitory-network"><a class="docs-heading-anchor" href="#Run-the-inhibitory-network">Run the inhibitory network</a><a id="Run-the-inhibitory-network-1"></a><a class="docs-heading-anchor-permalink" href="#Run-the-inhibitory-network" title="Permalink"></a></h3><p>Red curves show the ten inhibitory weights; green marks the clipping-aware single-winner estimate <span>$w_*\approx26.21$</span>. The gray dashed line is the nominal equal-sharing reference <span>$(h_E-r_{\mathrm{target}})/(Nr_I)=0.5$</span>.</p><pre><code class="language-julia hljs">prediction_inhibitory = inhibitory_single_winner_prediction()
+result_inhibitory = simulate_inhibitory_competition()
+inhibitory_weight_figure = plot(
+    result_inhibitory.weight_times./3600,result_inhibitory.weights;
+    color=:red,linewidth=3,label=false,legend=false,
+    xlabel=&quot;time (hours)&quot;,ylabel=&quot;inhibitory weight&quot;,
+    title=&quot;Ten inhibitory synapses with inverted STDP&quot;,
+    size=(1000,550),left_margin=6Plots.mm,bottom_margin=4Plots.mm)
+hline!(inhibitory_weight_figure,[prediction_inhibitory.weight];
+    color=:green,linewidth=3,label=false)
+hline!(inhibitory_weight_figure,[shared_target_inhibitory];
+    color=:gray,linestyle=:dash,linewidth=2,label=false);
+
+inhibitory_weight_figure</code></pre><img src="a289d010.svg" alt="Example block output"/><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../06_three_neuron_inhibitory_motif/">« Weight specialization in a three-neuron inhibitory motif</a><a class="docs-footer-nextpage" href="../z01_test_plasticity/">Plasticity rule tests »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.19.0 on <span class="colophon-date" title="Monday 19 October 2026 19:12">Monday 19 October 2026</span>. Using Julia version 1.12.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
