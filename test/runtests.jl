@@ -5,10 +5,13 @@ mutable struct TestPlasticityRule <: HawkesPlasticNetworks.AbstractPlasticityRul
     calls::Vector{Tuple{Symbol,Symbol,Float64,Symbol,Int}}
 end
 
+include("traces.jl")
 include("plasticity_asymmetric_stdp.jl")
 include("plasticity_heterosynaptic_rules.jl")
 include("plasticity_homeostatic_scaling.jl")
 include("plasticity_symmetric_stdp.jl")
+include("plasticity_adaptive_symmetric.jl")
+include("plasticity_adaptive_asymmetric.jl")
 include("plasticity_vogels_sprekeler.jl")
 include("weight_matrix_utilities.jl")
 include("analytics.jl")

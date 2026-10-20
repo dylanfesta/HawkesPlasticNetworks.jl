@@ -15,8 +15,11 @@ const inhibitory_simulation = first(split(last(split(source,
 const inhibitory_prediction = first(split(last(split(source,
     "# ### Single-winner estimate with rate rectification";limit=2)),
     "# ### Build the inhibitory feedforward network";limit=2))
+const combined_definitions = first(split(last(split(source,
+    "# ## Both excitatory and inhibitory";limit=2)),
+    "# ### Follow all ten weights";limit=2))
 const definitions = parameters*simulation*inhibitory_parameters*
-    inhibitory_prediction*inhibitory_simulation
+    inhibitory_prediction*inhibitory_simulation*combined_definitions
 include_string(@__MODULE__,definitions,source_path)
 end
 
@@ -99,24 +102,25 @@ end
     end
 
     @testset "Inverted inhibitory window and competition" begin
-        @test E.r_I == 10.0
-        @test E.h_post_inhibitory > E.r_target
+        @test E.r_I == 25.0
+        @test isapprox(E.η_inhibitory,5e-6;atol=1e-15,rtol=1e-12)
+        @test E.h_post_inhibitory > E.r_target_inhibitory
         @test isapprox(E.αpre_inhibitory,-30.0;atol=1e-12)
-        @test isapprox(E.shared_target_inhibitory,0.5;atol=1e-12)
+        @test isapprox(E.shared_target_inhibitory,0.2;atol=1e-12)
         @test isapprox(E.A_left_inhibitory-E.A_right_inhibitory,E.B_inhibitory;
             atol=1e-12)
         @test E.A_left_inhibitory > E.A_right_inhibitory > 0.0
         rule = E.H.PlasticityAsymmetricSTDP(
-            E.η_inhibitory,E.B_inhibitory,E.αpre_inhibitory,E.αpost,E.τ_plus,E.γ,
-            fill(E.weight_start,1,E.N);inverted=true)
-        population_i = E.H.PopulationExpKernelInhibitory(E.N,E.τ_syn;label="i")
+            E.η_inhibitory,E.B_inhibitory,E.αpre_inhibitory,E.αpost_inhibitory,E.τ_plus_inhibitory,E.γ_inhibitory,
+            fill(E.weight_start_inhibitory,1,E.N_inhibitory);inverted=true)
+        population_i = E.H.PopulationExpKernelInhibitory(E.N_inhibitory,E.τ_syn_inhibitory;label="i")
         @test isapprox(E.M_inhibitory,E.H.get_motif_coef_M10(rule,population_i);
             atol=1e-12,rtol=1e-12)
         @test E.M_inhibitory > 0.0
-        @test E.N*E.B_inhibitory*E.r_I > E.M_inhibitory
-        @test isapprox(E.αpre_inhibitory+E.B_inhibitory*E.r_target,0.0;atol=1e-12)
+        @test E.N_inhibitory*E.B_inhibitory*E.r_I > E.M_inhibitory
+        @test isapprox(E.αpre_inhibitory+E.B_inhibitory*E.r_target_inhibitory,0.0;atol=1e-12)
         # Hold total inhibition fixed: differences now grow rather than decay.
-        weights = fill(E.shared_target_inhibitory,E.N)
+        weights = fill(E.shared_target_inhibitory,E.N_inhibitory)
         weights[1] += 0.01
         weights[2] -= 0.01
         rate = E.h_post_inhibitory-E.r_I*sum(weights)
@@ -131,8 +135,8 @@ end
             simulation_duration=4.0,recording_interval=0.5,seed=42)
         repeated = E.simulate_inhibitory_competition(
             simulation_duration=4.0,recording_interval=0.5,seed=42)
-        @test size(result.weights) == (length(result.weight_times),E.N)
-        @test all(result.weights[1,:] .== E.weight_start)
+        @test size(result.weights) == (length(result.weight_times),E.N_inhibitory)
+        @test all(result.weights[1,:] .== E.weight_start_inhibitory)
         @test all(isfinite,result.weights)
         @test all(result.weights .>= 0.0)
         @test all(diff(result.weight_times) .> 0.0)
@@ -142,29 +146,30 @@ end
         @test isapprox(result.weights,repeated.weights;atol=1e-12,rtol=1e-12)
         @test isapprox(result.rates_post,repeated.rates_post;atol=1e-12,rtol=1e-12)
         @test isapprox(result.rates_pre,repeated.rates_pre;atol=1e-12,rtol=1e-12)
-        @test result.final_input_pre == fill(E.r_I,E.N)
+        @test result.final_input_pre == fill(E.r_I,E.N_inhibitory)
         @test result.final_input_post == [E.h_post_inhibitory]
-        @test !isapprox(result.final_weights,fill(E.weight_start,1,E.N);
+        @test !isapprox(result.final_weights,fill(E.weight_start_inhibitory,1,E.N_inhibitory);
             atol=1e-8,rtol=0.0)
         @test result.weight_min == 0.0
         @test result.weight_max == Inf
         frozen = E.simulate_inhibitory_competition(
             inhibitory_rate=20.0,learning_rate=0.0,
             simulation_duration=4.0,recording_interval=0.5,seed=42)
-        @test frozen.final_input_pre == fill(20.0,E.N)
-        @test frozen.weights == fill(E.weight_start,size(frozen.weights))
+        @test frozen.final_input_pre == fill(20.0,E.N_inhibitory)
+        @test frozen.weights == fill(E.weight_start_inhibitory,size(frozen.weights))
     end
 
     @testset "Clipped single-winner prediction" begin
         prediction = E.inhibitory_single_winner_prediction()
-        @test isapprox(prediction.weight,26.2111310787254;atol=1e-10,rtol=1e-12)
-        @test isapprox(prediction.rate,37.62032515191272;atol=1e-10,rtol=1e-12)
-        @test prediction.weight > E.h_post_inhibitory*E.τ_syn
-        @test 0.0 < prediction.rate < E.r_target
-        q = E.r_I*E.τ_syn
-        a = E.τ_syn/E.τ_plus
+        @test isapprox(prediction.weight,3.027994297902742;atol=1e-10,rtol=1e-12)
+        @test isapprox(prediction.rate,40.04795646268339;atol=1e-10,rtol=1e-12)
+        @test 2.0 <= prediction.weight <= 5.0
+        @test prediction.weight > E.h_post_inhibitory*E.τ_syn_inhibitory
+        @test 0.0 < prediction.rate < E.r_target_inhibitory
+        q = E.r_I*E.τ_syn_inhibitory
+        a = E.τ_syn_inhibitory/E.τ_plus_inhibitory
         C = a*E.beta(a,q+2)
-        z = E.h_post_inhibitory*E.τ_syn/prediction.weight
+        z = E.h_post_inhibitory*E.τ_syn_inhibitory/prediction.weight
         @test isapprox(E.αpre_inhibitory+prediction.rate*
             (E.A_left_inhibitory-E.A_right_inhibitory*C*z^a),0.0;atol=1e-12)
         for factor in (0.9,1.1)
@@ -177,8 +182,8 @@ end
 
         # Check the analytic clipped rate against an independent fixed-weight network.
         E.Random.seed!(42)
-        post = E.H.PopulationExpKernelExcitatory(1,E.τ_syn;label="post")
-        pre = E.H.PopulationExpKernelInhibitory(1,E.τ_syn;label="pre")
+        post = E.H.PopulationExpKernelExcitatory(1,E.τ_syn_inhibitory;label="post")
+        pre = E.H.PopulationExpKernelInhibitory(1,E.τ_syn_inhibitory;label="pre")
         connection = E.H.ConnectionWithWeights(post,fill(prediction.weight,1,1),pre)
         connected_post = E.H.ConnectedPopulationExpKernel(
             post,[E.h_post_inhibitory],(connection,pre))
@@ -193,5 +198,27 @@ end
         end
         rates = E.H.get_content(recorder).rates
         @test isapprox(sum(rates)/length(rates),prediction.rate;atol=1.0,rtol=0.0)
+    end
+end
+
+@testset "Winner-take-all examples have independent parameters" begin
+    E = WinnerTakeAllExample
+    imports = "using Random, HawkesPlasticNetworks; const H = HawkesPlasticNetworks;\n"
+    for (name,definitions,simulate) in (
+        (:inhibitory,E.inhibitory_parameters*E.inhibitory_prediction*E.inhibitory_simulation,
+            :simulate_inhibitory_competition),
+        (:combined,E.combined_definitions,:simulate_combined_competition))
+        @testset "$name without earlier examples" begin
+            isolated = Module(gensym(name))
+            Base.include_string(isolated,imports*definitions,E.source_path)
+            result = getfield(isolated,simulate)(
+                simulation_duration=4.0,recording_interval=0.5,seed=42)
+            reference = getfield(E,simulate)(
+                simulation_duration=4.0,recording_interval=0.5,seed=42)
+            for field in propertynames(reference)
+                @test isapprox(getproperty(result,field),getproperty(reference,field);
+                    atol=1e-12,rtol=1e-12)
+            end
+        end
     end
 end

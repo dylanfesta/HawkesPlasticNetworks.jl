@@ -402,6 +402,189 @@ end
 
 
 """
+    PlasticityAdaptiveAsymmetric(
+        η::Real, B::Real, τ_plus::Real, γ::Real, γ_calcium::Real,
+        weights::Matrix{Float64}; r_min::Real, r_max::Real,
+        αpre::Real=0.0, αpost::Real=0.0,
+        weight_min::Real=0.0, weight_max::Real=Inf, inverted::Bool=false)
+
+Asymmetric pair-based STDP with a slower, bounded postsynaptic calcium rate
+estimate for `n_post × n_pre` weights (post ← pre). Stores just one fast
+presynaptic trace, one fast postsynaptic trace, and one postsynaptic calcium
+trace. Exactly zero initial weights are masked; use [`refresh_mask!`](@ref)
+to change the mask. Updates are additive and bounded by
+`[weight_min, weight_max]`; the nonnegative learning rate `η` scales all terms.
+
+Normally `a_post = (B-1)/2` and `a_pre = (B+1)/2`. A presynaptic spike applies
+`η*(αpre + a_post*x_post_minus - B*c_post)`; a postsynaptic spike applies
+`η*(αpost + a_pre*x_pre_plus)`. With `inverted=true`, use
+`a_post = (B+1)/2` and `a_pre = (B-1)/2`: post-before-pre pairs potentiate and
+pre-before-post pairs depress. Alpha terms keep their signs and default to zero.
+All traces are read before inserting the current event, including for self
+connections. Calcium is incremented only by postsynaptic spikes.
+
+The presynaptic fast trace uses `τ_plus`; the postsynaptic fast trace uses
+`γ*τ_plus`, including when inverted. Calcium uses `γ_calcium*τ_plus`, which
+must be finite and strictly longer than both fast time constants. Each spike
+adds the inverse time constant to its trace. Calcium retains its full internal
+rate estimate and clamps only its readout to the required finite bounds
+`0 ≤ r_min ≤ r_max` (Hz when time is in seconds). Decay is applied before clamping.
+
+The asymmetric kernel's total signed area is `a_post + a_pre = B` for either
+orientation. The unclamped, one-sided calcium kernel has area `-B`, independently
+of its time constant. With zero alpha terms, the uncorrelated rate-driven drift
+is `η*B*r_pre*(r_post-c_post)`, so equal fast and slow postsynaptic rate estimates
+cancel this drift. Individual updates can fluctuate; spike correlations,
+calcium clipping, and weight bounds can affect cancellation.
+
+`B` must be finite with `0 < abs(B) ≤ 1`. Zero is forbidden because it removes
+the calcium contribution and adaptive rate feedback. For excitatory presynaptic
+inputs, negative `B` is expected, giving a positive calcium component. For
+inhibitory presynaptic inputs, positive `B` is expected, giving a negative
+calcium component. These signs are guidance, not population-type validation.
+"""
+struct PlasticityAdaptiveAsymmetric{
+    TP<:Trace,TM<:Trace,TC<:CalciumTrace} <: AbstractPlasticitySTDP
+  η::Float64
+  B::Float64
+  αpre::Float64
+  αpost::Float64
+  τ_plus::Float64
+  γ::Float64
+  γ_calcium::Float64
+  inverted::Bool
+  weight_min::Float64
+  weight_max::Float64
+  trace_pre_plus::TP
+  trace_post_minus::TM
+  trace_post_calcium::TC
+  zero_weight_mask::Matrix{Bool}
+end
+
+function PlasticityAdaptiveAsymmetric(
+    η::Real,B::Real,τ_plus::Real,γ::Real,γ_calcium::Real,
+    weights::Matrix{Float64};
+    r_min::Real,r_max::Real,αpre::Real=0.0,αpost::Real=0.0,
+    weight_min::Real=0.0,weight_max::Real=Inf,inverted::Bool=false)
+  balance = Float64(B)
+  τplus = Float64(τ_plus)
+  gamma = Float64(γ)
+  gamma_calcium = Float64(γ_calcium)
+  τminus = gamma*τplus
+  τcalcium = gamma_calcium*τplus
+  if !isfinite(balance) || !(0 < abs(balance) <= 1)
+    throw(ArgumentError("B must be finite and satisfy 0 < abs(B) ≤ 1; B=0 removes adaptive feedback"))
+  end
+  if !isfinite(τplus) || !(τplus > 0)
+    throw(ArgumentError("τ_plus must be finite and positive"))
+  end
+  if !isfinite(gamma) || !isfinite(τminus) || !(τminus > 0)
+    throw(ArgumentError("γ and γ*τ_plus must be finite and positive"))
+  end
+  if !isfinite(gamma_calcium) || !isfinite(τcalcium) ||
+      !(τcalcium > max(τplus,τminus))
+    throw(ArgumentError("γ_calcium*τ_plus must be finite and slower than both fast traces"))
+  end
+  if !(η >= 0)
+    throw(ArgumentError("η must be non-negative"))
+  end
+  _validate_plasticity_weight_bounds(weight_min,weight_max)
+  n_post,n_pre = size(weights)
+  return PlasticityAdaptiveAsymmetric(
+    Float64(η),balance,Float64(αpre),Float64(αpost),
+    τplus,gamma,gamma_calcium,inverted,Float64(weight_min),Float64(weight_max),
+    Trace(τplus,n_pre),Trace(τminus,n_post),
+    CalciumTrace(τcalcium,n_post;r_min=r_min,r_max=r_max),
+    Matrix{Bool}(iszero.(weights)))
+end
+
+# Combine fast and calcium contributions before applying weight bounds.
+function _apply_adaptive_asymmetric_pre!(
+    weights::AbstractMatrix{Float64},plast::PlasticityAdaptiveAsymmetric,
+    t_fire::Real,neuron_fire_idx::Integer)
+  if plast.inverted
+    area_post = (plast.B+1.0)/2.0
+  else
+    area_post = (plast.B-1.0)/2.0
+  end
+  scale_post = area_post*trace_decay(t_fire,plast.trace_post_minus)
+  calcium = plast.trace_post_calcium
+  decay_calcium = trace_decay(t_fire,calcium)
+  @inbounds for post_idx in axes(weights,1)
+    if !plast.zero_weight_mask[post_idx,neuron_fire_idx]
+      c = clamp(decay_calcium*calcium.trace.val[post_idx],
+        calcium.r_min,calcium.r_max)
+      Δweight = plast.η*(plast.αpre +
+        scale_post*plast.trace_post_minus.val[post_idx] - plast.B*c)
+      weights[post_idx,neuron_fire_idx] = hardbounds(
+        weights[post_idx,neuron_fire_idx]+Δweight,plast.weight_min,plast.weight_max)
+    end
+  end
+  return nothing
+end
+
+function reset!(plast::PlasticityAdaptiveAsymmetric)
+  reset!(plast.trace_pre_plus)
+  reset!(plast.trace_post_minus)
+  reset!(plast.trace_post_calcium)
+  return nothing
+end
+
+
+function apply_plasticity!(
+    plast::PlasticityAdaptiveAsymmetric,
+    connection::AbstractConnectionWithWeights,
+    t_fire::Real,
+    pop_fire_label::Symbol,
+    neuron_fire_idx::Integer)
+  post_fired = pop_fire_label == connection.post_pop_label
+  pre_fired = pop_fire_label == connection.pre_pop_label
+  if !(post_fired || pre_fired)
+    return nothing
+  end
+
+  weights = connection.weights
+  mask = plast.zero_weight_mask
+  if size(weights) != size(mask)
+    throw(DimensionMismatch("connection weights and zero-weight mask must have the same size"))
+  end
+  η = plast.η
+
+  # Read the traces lazily. The trace vectors are advanced only below, when
+  # the current spike is written into them.
+  if pre_fired
+    _apply_adaptive_asymmetric_pre!(weights,plast,t_fire,neuron_fire_idx)
+  end
+
+  if post_fired
+    decay_pre = trace_decay(t_fire,plast.trace_pre_plus)
+    if plast.inverted
+      trace_scale = ((plast.B-1.0)/2.0)*decay_pre
+    else
+      trace_scale = ((plast.B+1.0)/2.0)*decay_pre
+    end
+    _apply_stdp_single_trace!(
+      transpose(weights),transpose(mask),plast.trace_pre_plus.val,
+      neuron_fire_idx,η,plast.αpost,
+      trace_scale,plast.weight_min,plast.weight_max)
+  end
+
+  # Both weight directions above see the traces before the current event.
+  if post_fired
+    propagate!(t_fire,plast.trace_post_minus)
+    add_firing_event_now!(plast.trace_post_minus,neuron_fire_idx)
+    propagate!(t_fire,plast.trace_post_calcium)
+    add_firing_event_now!(plast.trace_post_calcium,neuron_fire_idx)
+  end
+  if pre_fired
+    propagate!(t_fire,plast.trace_pre_plus)
+    add_firing_event_now!(plast.trace_pre_plus,neuron_fire_idx)
+  end
+  return nothing
+end
+
+
+"""
     PlasticitySymmetricSTDP(
         η::Real, B::Real, αpre::Real, αpost::Real,
         τ_plus::Real, γ::Real, weights::Matrix{Float64};
@@ -554,6 +737,187 @@ function apply_plasticity!(
     propagate!(t_fire,plast.trace_post_minus)
     add_firing_event_now!(plast.trace_post_plus,neuron_fire_idx)
     add_firing_event_now!(plast.trace_post_minus,neuron_fire_idx)
+  end
+  if pre_fired
+    propagate!(t_fire,plast.trace_pre_plus)
+    propagate!(t_fire,plast.trace_pre_minus)
+    add_firing_event_now!(plast.trace_pre_plus,neuron_fire_idx)
+    add_firing_event_now!(plast.trace_pre_minus,neuron_fire_idx)
+  end
+  return nothing
+end
+
+
+"""
+    PlasticityAdaptiveSymmetric(
+        η::Real, B::Real, τ_plus::Real, γ::Real, γ_calcium::Real,
+        weights::Matrix{Float64}; r_min::Real, r_max::Real,
+        αpre::Real=0.0, αpost::Real=0.0,
+        weight_min::Real=0.0, weight_max::Real=Inf)
+
+Symmetric STDP with a slower, bounded postsynaptic calcium rate estimate for
+`n_post × n_pre` weights (post ← pre). Exactly zero initial weights are masked;
+use [`refresh_mask!`](@ref) to change the mask. Updates are additive and bounded
+by `[weight_min, weight_max]`. `η` scales all plasticity terms.
+
+With `a_plus = (B+1)/4` and `a_minus = (B-1)/4`, a presynaptic spike applies
+`η*(αpre + a_plus*x_post_plus + a_minus*x_post_minus - B*c_post)`.
+A postsynaptic spike applies
+`η*(αpost + a_plus*x_pre_plus + a_minus*x_pre_minus)`.
+All traces are read before inserting the current spike, including for self
+connections. Calcium is incremented only by postsynaptic spikes.
+
+The fast time constants are `τ_plus` and `γ*τ_plus`. Calcium uses
+`γ_calcium*τ_plus`, which must be finite and strictly longer than both fast
+time constants. Each spike adds the inverse time constant to its trace.
+Calcium retains its full internal rate estimate and clamps only its readout
+to the required finite bounds `0 ≤ r_min ≤ r_max` (Hz when time is in seconds).
+Readout decays the underlying estimate to the event time before clamping.
+
+The two halves of the symmetric STDP kernel have total signed area `B`.
+The unclamped, one-sided calcium kernel has area `-B`, independently of its
+time constant. With zero alpha terms, the uncorrelated rate-driven drift is
+`η*B*r_pre*(r_post-c_post)` and cancels when the slow calcium estimate equals
+the fast postsynaptic rate estimate. Individual updates can fluctuate;
+spike correlations, calcium clipping, and weight bounds can affect cancellation.
+
+`B` must be finite with `0 < abs(B) ≤ 1`. Zero is forbidden because it removes
+the calcium contribution and adaptive rate feedback. For excitatory presynaptic
+inputs, negative `B` is expected, giving a positive calcium component. For
+inhibitory presynaptic inputs, positive `B` is expected, giving a negative
+calcium component. These signs are guidance, not population-type validation.
+`αpre` and `αpost` are constant contributions per pre/post spike, both zero by
+default.
+"""
+struct PlasticityAdaptiveSymmetric <: AbstractPlasticitySTDP
+  η::Float64
+  B::Float64
+  αpre::Float64
+  αpost::Float64
+  τ_plus::Float64
+  γ::Float64
+  γ_calcium::Float64
+  weight_min::Float64
+  weight_max::Float64
+  trace_pre_plus::Trace
+  trace_pre_minus::Trace
+  trace_post_plus::Trace
+  trace_post_minus::Trace
+  trace_post_calcium::CalciumTrace
+  zero_weight_mask::Matrix{Bool}
+end
+
+function PlasticityAdaptiveSymmetric(
+    η::Real,B::Real,τ_plus::Real,γ::Real,γ_calcium::Real,
+    weights::Matrix{Float64};
+    r_min::Real,r_max::Real,αpre::Real=0.0,αpost::Real=0.0,
+    weight_min::Real=0.0,weight_max::Real=Inf)
+  balance = Float64(B)
+  τplus = Float64(τ_plus)
+  gamma = Float64(γ)
+  gamma_calcium = Float64(γ_calcium)
+  τminus = gamma*τplus
+  τcalcium = gamma_calcium*τplus
+  if !isfinite(balance) || !(0 < abs(balance) <= 1)
+    throw(ArgumentError("B must be finite and satisfy 0 < abs(B) ≤ 1; B=0 removes adaptive feedback"))
+  end
+  if !isfinite(τplus) || !(τplus > 0)
+    throw(ArgumentError("τ_plus must be finite and positive"))
+  end
+  if !isfinite(gamma) || !isfinite(τminus) || !(τminus > 0)
+    throw(ArgumentError("γ and γ*τ_plus must be finite and positive"))
+  end
+  if !isfinite(gamma_calcium) || !isfinite(τcalcium) ||
+      !(τcalcium > max(τplus,τminus))
+    throw(ArgumentError("γ_calcium*τ_plus must be finite and slower than both fast traces"))
+  end
+  _validate_plasticity_weight_bounds(weight_min,weight_max)
+  n_post,n_pre = size(weights)
+  return PlasticityAdaptiveSymmetric(
+    Float64(η),balance,Float64(αpre),Float64(αpost),
+    τplus,gamma,gamma_calcium,Float64(weight_min),Float64(weight_max),
+    Trace(τplus,n_pre),Trace(τminus,n_pre),
+    Trace(τplus,n_post),Trace(τminus,n_post),
+    CalciumTrace(τcalcium,n_post;r_min=r_min,r_max=r_max),
+    Matrix{Bool}(iszero.(weights)))
+end
+
+# Combine the three presynaptic-event contributions before bounding the weight.
+function _apply_adaptive_symmetric_pre!(
+    weights::AbstractMatrix{Float64},plast::PlasticityAdaptiveSymmetric,
+    t_fire::Real,neuron_fire_idx::Integer)
+  scale_plus = ((plast.B+1.0)/4.0)*trace_decay(t_fire,plast.trace_post_plus)
+  scale_minus = ((plast.B-1.0)/4.0)*trace_decay(t_fire,plast.trace_post_minus)
+  calcium = plast.trace_post_calcium
+  decay_calcium = trace_decay(t_fire,calcium)
+  @inbounds for post_idx in axes(weights,1)
+    if !plast.zero_weight_mask[post_idx,neuron_fire_idx]
+      c = clamp(decay_calcium*calcium.trace.val[post_idx],
+        calcium.r_min,calcium.r_max)
+      Δweight = plast.η*(plast.αpre +
+        scale_plus*plast.trace_post_plus.val[post_idx] +
+        scale_minus*plast.trace_post_minus.val[post_idx] - plast.B*c)
+      weights[post_idx,neuron_fire_idx] = hardbounds(
+        weights[post_idx,neuron_fire_idx]+Δweight,plast.weight_min,plast.weight_max)
+    end
+  end
+  return nothing
+end
+
+function reset!(plast::PlasticityAdaptiveSymmetric)
+  reset!(plast.trace_pre_plus)
+  reset!(plast.trace_pre_minus)
+  reset!(plast.trace_post_plus)
+  reset!(plast.trace_post_minus)
+  reset!(plast.trace_post_calcium)
+  return nothing
+end
+
+
+function apply_plasticity!(
+    plast::PlasticityAdaptiveSymmetric,
+    connection::AbstractConnectionWithWeights,
+    t_fire::Real,
+    pop_fire_label::Symbol,
+    neuron_fire_idx::Integer)
+  post_fired = pop_fire_label == connection.post_pop_label
+  pre_fired = pop_fire_label == connection.pre_pop_label
+  if !(post_fired || pre_fired)
+    return nothing
+  end
+
+  weights = connection.weights
+  mask = plast.zero_weight_mask
+  if size(weights) != size(mask)
+    throw(DimensionMismatch("connection weights and zero-weight mask must have the same size"))
+  end
+  η = plast.η
+
+  # Read the traces lazily. The trace vectors are advanced only below, when
+  # the current spike is written into them.
+  if pre_fired
+    _apply_adaptive_symmetric_pre!(weights,plast,t_fire,neuron_fire_idx)
+  end
+
+  if post_fired
+    decay_plus = trace_decay(t_fire,plast.trace_pre_plus)
+    decay_minus = trace_decay(t_fire,plast.trace_pre_minus)
+    trace_scale_plus = ((plast.B+1.0)/4.0)*decay_plus
+    trace_scale_minus = ((plast.B-1.0)/4.0)*decay_minus
+    _apply_stdp_two_traces!(
+      transpose(weights),transpose(mask),
+      plast.trace_pre_plus.val,plast.trace_pre_minus.val,
+      neuron_fire_idx,η,plast.αpost,trace_scale_plus,trace_scale_minus,
+      plast.weight_min,plast.weight_max)
+  end
+
+  if post_fired
+    propagate!(t_fire,plast.trace_post_plus)
+    propagate!(t_fire,plast.trace_post_minus)
+    add_firing_event_now!(plast.trace_post_plus,neuron_fire_idx)
+    add_firing_event_now!(plast.trace_post_minus,neuron_fire_idx)
+    propagate!(t_fire,plast.trace_post_calcium)
+    add_firing_event_now!(plast.trace_post_calcium,neuron_fire_idx)
   end
   if pre_fired
     propagate!(t_fire,plast.trace_pre_plus)

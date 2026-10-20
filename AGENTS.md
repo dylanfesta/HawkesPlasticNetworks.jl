@@ -48,16 +48,23 @@ When dealing with connectivity and recursion, use a "post <- pre" ordering, mean
 
 ## Testing
 
-- Use the standard Julia package test flow:
+- For package implementation changes, use the standard Julia package test flow:
 
   ```sh
   julia --project=. -e 'using Pkg; Pkg.test()'
   ```
 
-- Every new function should have a corresponding unit test. Small helper
+- Every new package function should have a corresponding unit test. Small helper
   functions are not exempt.
-- When changing an existing function, add or update tests that capture the
+- When changing an existing package function, add or update tests that capture the
   changed behavior directly.
+- Documentation examples are validated by executing or rendering the affected
+  example. Changes confined to example parameters, plots, or prose do not require
+  the full package test suite, even when the example contains executable Julia.
+- Do not add unit tests solely to pin documentation parameter choices. If existing
+  tests depend on changed example parameters, keep those assertions consistent
+  and run the affected tests when needed; this alone does not require a full
+  package test run.
 - Organize tests into focused `@testset`s by component or behavior. It is fine
   to split tests into additional files and `include` them from
   `test/runtests.jl` as coverage grows.
@@ -86,8 +93,10 @@ control.
   overwriting unrelated user changes.
 - Keep changes scoped to the requested behavior. Do not refactor inactive functions
   or files.
-- Run the full package test command before finishing when code changes are made.
+- Run the full package test command before finishing when package implementation
+  changes are made.
   If tests cannot run because dependencies or the environment are unavailable,
   report that clearly.
-- For documentation-only edits, a test run is optional; still ensure examples and
-  commands are accurate.
+- For documentation-only edits, including executable example parameter changes,
+  validate the affected example or page without running the full package suite.
+  For prose-only edits, check accuracy; execution or rendering is optional.
