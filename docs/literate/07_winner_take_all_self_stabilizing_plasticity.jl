@@ -3,25 +3,15 @@
 # ## Excitatory winner-take-all
 
 # Ten independent excitatory neurons fire at 50 Hz and project to one
-# postsynaptic neuron with a nominal target of 50 Hz. Its external drive is
-# only 5 Hz. All ten plastic weights start at 0.001; there is no feedback or
-# recurrent connectivity. Spike fluctuations break the initial symmetry.
-#
-# Run from the repository with the documentation environment:
-#
-# ```sh
-# julia --project=docs docs/literate/07_winner_take_all_self_stabilizing_plasticity.jl
-# ```
-#
-# Times are in seconds, rates in Hz, and weights are integrated kernel strengths.
-# Each example defines its own population, input, plasticity, initialization,
-# and simulation parameters. Later examples do not inherit earlier settings.
+# postsynaptic neuron with a target of 50 Hz. Its external drive is low (5 Hz),
+# which means the target neuron will require strong incoming weights.
+# There is no recurrent connectivity.
 
 using Random
 using HawkesPlasticNetworks
 const H = HawkesPlasticNetworks
 
-# All parameters below belong to this excitatory-only example.
+# Parameters
 const N = 10
 const r_pre = 50.0
 const r_target = 50.0
@@ -49,10 +39,12 @@ const winner_rate = h_post+r_pre*winner_weight;
 
 # ### STDP kernel
 
-# This is the asymmetric STDP window used in the simulation, with the overall
-# learning rate ``\eta=10^{-6}`` factored out. For
-# ``\Delta t=t_{\mathrm{post}}-t_{\mathrm{pre}}``, causal pairs potentiate and
-# reverse-order pairs depress:
+# The idea here is that the rate components push the target neuron to its
+# prescribed rate. Once the rate is reached, however, the covariance-components
+# start to influence plasticity and trigger competition.
+# Competition comes from the positive loop of pre-post connections generating
+# positive pre-post correlations, leading to stronger $\Delta W$, leading to
+# stronger connections and so on.
 #
 # ```math
 # L(\Delta t)=
@@ -62,8 +54,10 @@ const winner_rate = h_post+r_pre*winner_weight;
 # \end{cases}
 # ```
 #
-# Depression lasts ten times longer and has four times the area of potentiation.
-# The integrated window is ``B=A_+-A_-=-0.6``. The plot uses milliseconds.
+# Depression has a slower timescales because it does not matter so much.
+# What is important for stability is a net negative area of the STDP
+# and a positive $\alpha_{\text{pre}}$. 
+# Below you can see the STDP kernel (but not the alphas)
 
 using Plots
 
@@ -95,8 +89,8 @@ stdp_figure
 
 # ### Rate regulation and competition
 
-# With ``\alpha_{\mathrm{pre}}=-B r_{\mathrm{target}}=30`` and
-# ``\alpha_{\mathrm{post}}=0``, a first-order approximation gives
+# With ``\alpha_{\text{pre}}=-B \, r_{\mathrm{target}}=30`` and
+# ``\alpha_{\text{post}}=0``, a first-order approximation gives
 #
 # ```math
 # \langle\dot w_i\rangle\approx\eta r_{\mathrm{pre}}
@@ -107,16 +101,16 @@ stdp_figure
 # The negative ``B`` regulates total excitation. The causal term ``M w_i``
 # favors stronger synapses, amplifying differences until weaker weights approach
 # zero. Here ``|B|r_{\mathrm{pre}}>M``, so total excitation remains stable even
-# with a single active synapse. Correlations can shift the learned rate above
-# the nominal target. The difference timescale is about 1.39 hours; we run for 16.
+# with a single active synapse. Note that correlations always shift the learned rate above
+# the nominal target.
 #
-# Once only one synapse remains, ``r_{\mathrm{post}}=h+r_{\mathrm{pre}}w``.
+# Assuming only one synapse remains, ``r_{\mathrm{post}}=h+r_{\mathrm{pre}}w``.
 # Setting its rate and causal-correlation drift to zero gives
 #
 # ```math
-# 0=\alpha_{\mathrm{pre}}+Bh+(Br_{\mathrm{pre}}+M)w_*,
+# 0=\alpha_{\text{pre}}+Bh+(Br_{\mathrm{pre}}+M)w_*,
 # \qquad
-# w_* = \frac{\alpha_{\mathrm{pre}}+Bh}{-Br_{\mathrm{pre}}-M}
+# w_* = \frac{\alpha_{\text{pre}}+Bh}{-Br_{\mathrm{pre}}-M}
 # = \frac{27}{26}\approx1.03846.
 # ```
 #
@@ -129,8 +123,7 @@ stdp_figure
 
 # In `post <- pre` order, the plastic matrix has one row and ten columns.
 # The presynaptic population has constant input and no incoming connections.
-# Weights stay nonnegative with no upper cap. Their nonzero initialization
-# keeps all ten synapses eligible for plasticity, including after reaching zero.
+# Weights stay nonnegative with no upper cap.
 
 function simulate_competition(;
     simulation_duration::Real=simulation_duration,
@@ -183,9 +176,9 @@ end;
 
 # ### Run the network and follow the ten weights
 
-# Navy curves show the ten weights; the green line marks the single-winner
-# fixed point ``w_*\approx1.03846``. The gray dashed line marks equal sharing
-# at the nominal target: ``(r_{\mathrm{target}}-h)/(Nr_{\mathrm{pre}})=0.09``.
+# Blue curves show the ten weights; the green line marks the single-winner
+# fixed point. The gray dashed line marks equal sharing
+# at the nominal target: ``(r_{\mathrm{target}}-h)/(Nr_{\mathrm{pre}})``.
 # The lower panel shows the postsynaptic rate in 60-second bins, with the
 # nominal target and the predicted single-winner rate as horizontal references.
 
@@ -227,20 +220,19 @@ display(competition_figure) #src
 ## #src
 competition_figure
 
-# Simulation execution time, including first-use compilation and excluding plotting:
+# Simulation execution time, excluding plotting:
 
-println("Execution time: ",round(execution_seconds/60;digits=3)," minutes.") #hide
+println("Execution time: ",round(execution_seconds/60;digits=1)," minutes (",round(Int,execution_seconds)," seconds).") #hide
 
 
 # ## Inhibitory winner-take-all
 
+# Now we do the same for inhibition. 
 # Ten independent inhibitory neurons now fire at 25 Hz, with constant external
-# inputs and no connections from E. The postsynaptic drive remains 100 Hz,
-# above the 50 Hz target: inhibition must remove the excess activity.
-# The higher inhibitory rate keeps the final winning weight near 3.
-# The initial weights, recording interval, and 16-hour duration are unchanged.
+# inputs and no connections from E. The target neuron receives an input matching 100 Hz,
+# Inhibition must remove the excess activity reaching a 50 Hz target.
 
-# All parameters below belong to this inhibitory-only example.
+# Parameters
 const N_inhibitory = 10
 const r_I = 25.0
 const r_target_inhibitory = 50.0
@@ -266,11 +258,10 @@ const shared_target_inhibitory = (h_post_inhibitory-r_target_inhibitory)/(N_inhi
 
 # ### Inhibitory STDP kernel
 
-# Invert the asymmetric window: post-before-pre pairs potentiate over 200 ms,
-# while pre-before-post pairs depress over 20 ms. The positive left area is
-# 0.8 and the negative right area is 0.2, giving integrated area ``B=0.6``.
-# Negative ``\alpha_{\mathrm{pre}}=-30`` balances that positive rate bias.
-# `inverted=true` changes the timing signs while keeping `B` equal to the area:
+# This is pretty much the inverted version of the previous kernel.
+# Exactly the same principles are at play, except the presynaptic neuron is
+# inhibitory here, which requires to flip signs.
+# In the plasticity rule `inverted=true` changes the timing signs while keeping `B` equal to the area:
 #
 # ```math
 # L_I(\Delta t)=
@@ -313,15 +304,8 @@ inhibitory_stdp_figure
 # \qquad r_E\approx h_E-r_I\sum_i w_i.
 # ```
 #
-# Above target inhibition strengthens; below target it weakens. Meanwhile,
-# differences grow as ``d(w_i-w_j)/dt=\eta_I r_IM_I(w_i-w_j)``: fluctuations
-# select stronger synapses instead of being averaged away. The sum is stable
-# in this approximation when ``NBr_I>M_I``. We impose only a zero lower bound;
-# no upper weight saturation is needed because the rate feedback is self-regulating.
-# At 25 Hz, ``\eta_I=5\times10^{-6}`` gives a difference timescale of about
-# 33.3 minutes.
-# Strong single inhibitory inputs can rectify E, so the linear approximation
-# does not give a reliable numerical single-winner weight at this input rate.
+# Above target inhibition strengthens; below target it weakens. 
+# No upper weight saturation is needed because the rate feedback is self-regulating.
 
 # ### Single-winner estimate with rate rectification
 
@@ -339,7 +323,7 @@ inhibitory_stdp_figure
 # samples the rate after an inhibitory spike. The resulting drift equation is
 #
 # ```math
-# 0=\alpha_{\mathrm{pre}}+Kz^q\left[A_{\mathrm{left}}-
+# 0=\alpha_{\text{pre}}+Kz^q\left[A_{\mathrm{left}}-
 # A_{\mathrm{right}}Cz^a\right],\qquad
 # w_*\approx3.03,\quad r_E^*\approx40.05\,\mathrm{Hz}.
 # ```
@@ -377,9 +361,6 @@ function inhibitory_single_winner_prediction()
 end;
 
 # ### Build the inhibitory feedforward network
-
-# The `E <- I` matrix is plastic. I has only constant external input: there is
-# no reciprocal connection and no adaptive-input callback.
 
 function simulate_inhibitory_competition(;
     inhibitory_rate::Real=r_I,learning_rate::Real=η_inhibitory,
@@ -478,30 +459,30 @@ inhibitory_competition_figure
 
 # Simulation execution time, including first-use compilation and excluding plotting:
 
-println("Execution time: ",round(execution_seconds_inhibitory/60;digits=3)," minutes.") #hide
+println("Execution time: ",round(execution_seconds_inhibitory/60;digits=1)," minutes (",round(Int,execution_seconds_inhibitory)," seconds).") #hide
 
 # ## Both excitatory and inhibitory
 
-# Five excitatory neurons at 50 Hz and five inhibitory neurons at 60 Hz now
+# What happens when we try with both excitatory and inhibitory neurons? It turns
+# out that this trick does not readily extend to multiple populations! Because
+# competition among neurons takes place through the postsynaptic rate, excitatory
+# and inhibitory inputs interfere with each other, potentially driving weights
+# to saturation. Competition within each population would require a
+# population-specific signal! Which then would be a bit like regularizing, 
+# separately, by the sum of exc input weights and the sum of inh input weights.
+#
+# Here I give a negative examples.
+# Three excitatory neurons at 50 Hz and three inhibitory neurons at 60 Hz now
 # project to the same postsynaptic neuron. Both presynaptic populations have
 # constant inputs and no incoming connections. The postsynaptic external drive
-# is only 5 Hz. All ten weights start at 0.001.
+# is only 5 Hz. Excitation uses asymmetric STDP with a fixed target of 10 Hz. Inhibition
+# uses adaptive inverted asymmetric STDP.
 #
-# Excitation uses asymmetric STDP with a fixed target of 10 Hz. Inhibition
-# uses adaptive inverted asymmetric STDP: its postsynaptic calcium trace has
-# a 30-second time constant, with a target readout bounded between 10 and
-# 30 Hz. Both inhibitory alpha terms are zero, so calcium supplies the target.
-# These bounds apply to the adaptive target, not to instantaneous firing rates.
-#
-# Initially the 5 Hz postsynaptic drive is below both targets, favoring stronger
-# excitation and weaker inhibition on average. Excitatory rate feedback becomes
-# depressive above 10 Hz. The inhibitory target follows the slower calcium
-# estimate within 10–30 Hz; correlations can still affect both weight drifts.
-# Both excitatory and inhibitory weights are capped at 10.0.
+# 
 
 # All parameters below belong to this mixed E/I example.
-const N_e_combined = 5
-const N_i_combined = 5
+const N_e_combined = 3
+const N_i_combined = 3
 const r_e_combined = 50.0
 const r_i_combined = 60.0
 const h_post_combined = 5.0
@@ -535,10 +516,10 @@ const recording_interval_combined = 60.0;
 
 # ### Build the combined feedforward network
 
-# Each plastic matrix has shape `1 × 5`, in `post <- pre` order. The inhibitory
+# Each plastic matrix has shape `1 × 3`, in `post <- pre` order. The inhibitory
 # weights are positive magnitudes; the inhibitory population supplies their
 # negative effect on the postsynaptic input. Each matrix gets its own rule and
-# recorder, retaining its own event-triggered recording times.
+# recorder.
 
 function simulate_combined_competition(;
     simulation_duration::Real=simulation_duration_combined,
@@ -606,11 +587,10 @@ function simulate_combined_competition(;
       rate_times=content_post.times,rates_post=content_post.rates)
 end;
 
-# ### Follow all ten weights
+# ### Follow all six weights
 
-# Navy curves show the five excitatory weights; red curves show the five
-# inhibitory weight magnitudes. Both populations learn throughout the run,
-# with learning rates 5e-6 for excitation and 3.3325e-5 for inhibition.
+# Blue curves show the three excitatory weights; red curves show the three
+# inhibitory weight magnitudes. 
 # The lower panel shows the postsynaptic rate in 60-second bins. Red dashed
 # lines mark the inhibitory target bounds (10 and 30 Hz); the navy dotted line
 # marks the fixed excitatory target (10 Hz).
@@ -661,4 +641,286 @@ combined_competition_figure
 
 # Simulation execution time, including first-use compilation and excluding plotting:
 
-println("Execution time: ",round(execution_seconds_combined/60;digits=3)," minutes.") #hide
+println("Execution time: ",round(execution_seconds_combined/60;digits=1)," minutes (",round(Int,execution_seconds_combined)," seconds).") #hide
+
+# ## Reciprocal excitatory and inhibitory network
+
+# Here I show a different strategy to trigger some competition and sparse connectivity.
+# Five excitatory neurons and five inhibitory neurons form a reciprocal network.
+# Each E neuron receives 50 Hz of constant external drive, and each I neuron
+# receives 2 Hz. Every E neuron projects to every
+# I neuron and vice versa, with no connections within either population.
+
+# ### Reciprocal network parameters
+
+const N_e_reciprocal = 5
+const N_i_reciprocal = 5
+const h_e_reciprocal = 50.0
+const h_i_reciprocal = 2.0
+const τ_syn_reciprocal = 30e-3
+const τ_plus_e_reciprocal = 60e-3
+const τ_plus_i_reciprocal = 60e-3
+const γ_e_reciprocal = 1.0
+const γ_i_reciprocal = 20.0
+const B_e_reciprocal = -0.6
+const B_i_reciprocal = 0.0
+const r_target_i_reciprocal = 30.0
+const αpre_e_reciprocal = -B_e_reciprocal*r_target_i_reciprocal
+const αpost_e_reciprocal = 0.0
+const αpre_i_reciprocal = -1.0
+const αpost_i_reciprocal = 1.0
+const η_e_reciprocal = 1.775556e-6
+const η_i_reciprocal = 2.95630074e-6
+const weight_start_e_reciprocal = 0.1
+const weight_start_i_reciprocal = 0.1
+const weight_min_reciprocal = 0.0
+const weight_max_e_reciprocal = 1.0
+const weight_max_i_reciprocal = 0.6
+const simulation_seed_reciprocal = 0
+const simulation_duration_reciprocal = 16*3600.0
+const recording_interval_reciprocal = 60.0;
+
+# ### Plasticity and reciprocal connections
+
+# E → I uses the first example's asymmetric rule, with negative integrated
+# bias ``B=-0.6`` and ``\alpha_{\text{pre}}=18``. Its mean rate contribution
+# is proportional to ``r_E[18-0.6r_I]``, giving a nominal inhibitory target of
+# 30 Hz. With ``\gamma_E=1``, causal pairs potentiate and reverse-order pairs
+# depress with the same 60 ms timescale. 
+#
+# I → E uses symmetric STDP with balanced positive and negative areas
+# (``B=0``), ``\alpha_{\text{pre}}=-1``, ``\alpha_{\text{post}}=1``, and 1.665 times the excitatory learning rate.
+# Both spike orders potentiate at short lags (60 ms positive traces) and
+# depress at longer lags (1.2 s negative traces). It has no explicit rate target.
+#
+# In `post <- pre` order, `weights_ie` (I ← E) has shape `5 × 5`,
+# and `weights_ei` (E ← I) has shape `5 × 5`. 
+
+# Rates are recorded separately for each neuron in complete 60-second bins.
+
+struct NeuronRateRecorder <: H.AbstractRecorder
+  population_label::Symbol
+  interval::Float64
+  rates::Matrix{Float64}
+end
+
+function H.reset!(recorder::NeuronRateRecorder)
+  fill!(recorder.rates,0.0)
+  return nothing
+end
+
+function H.record_stuff!(recorder::NeuronRateRecorder,time::Real,
+    population_index::Integer,population_label::Symbol,neuron_index::Integer)
+  if population_label == recorder.population_label
+    if 0.0 <= time < size(recorder.rates,1)*recorder.interval
+      bin = floor(Int,time/recorder.interval)+1
+      recorder.rates[bin,neuron_index] += 1/recorder.interval
+    end
+  end
+  return nothing
+end;
+
+## #src
+rate_check_reciprocal = NeuronRateRecorder(:e,60.0,zeros(2,2)) #src
+H.record_stuff!(rate_check_reciprocal,0.0,1,:e,1) #src
+H.record_stuff!(rate_check_reciprocal,60.0,1,:e,2) #src
+H.record_stuff!(rate_check_reciprocal,120.0,1,:e,1) #src
+H.record_stuff!(rate_check_reciprocal,30.0,2,:i,1) #src
+@assert isapprox(rate_check_reciprocal.rates,[1/60 0.0; 0.0 1/60];atol=1e-12) #src
+H.reset!(rate_check_reciprocal) #src
+@assert all(iszero,rate_check_reciprocal.rates) #src
+## #src
+
+function simulate_reciprocal_competition(;
+    duration::Real=simulation_duration_reciprocal,interval::Real=recording_interval_reciprocal,
+    seed::Integer=simulation_seed_reciprocal)
+  Random.seed!(seed)
+  population_e = H.PopulationExpKernelExcitatory(N_e_reciprocal,τ_syn_reciprocal;label="e")
+  population_i = H.PopulationExpKernelInhibitory(N_i_reciprocal,τ_syn_reciprocal;label="i")
+  weights_ie = fill(weight_start_e_reciprocal,N_i_reciprocal,N_e_reciprocal)
+  weights_ei = fill(weight_start_i_reciprocal,N_e_reciprocal,N_i_reciprocal)
+  rule_e = H.PlasticityAsymmetricSTDP(
+      η_e_reciprocal,B_e_reciprocal,αpre_e_reciprocal,αpost_e_reciprocal,τ_plus_e_reciprocal,γ_e_reciprocal,weights_ie;
+      weight_min=weight_min_reciprocal,weight_max=weight_max_e_reciprocal)
+  rule_i = H.PlasticitySymmetricSTDP(
+      η_i_reciprocal,B_i_reciprocal,αpre_i_reciprocal,αpost_i_reciprocal,τ_plus_i_reciprocal,γ_i_reciprocal,weights_ei;
+      weight_min=weight_min_reciprocal,weight_max=weight_max_i_reciprocal)
+  ## #src
+  @assert !rule_e.inverted #src
+  @assert isapprox(rule_e.B,-0.6;atol=1e-12) #src
+  @assert isapprox(rule_e.αpre+rule_e.B*r_target_i_reciprocal,0.0;atol=1e-12) #src
+  @assert rule_e.αpost == 0.0 #src
+  @assert rule_i.B == 0.0 #src
+  @assert isapprox(rule_i.αpre,-1.0;atol=1e-12) #src
+  @assert isapprox(rule_i.αpost,1.0;atol=1e-12) #src
+  @assert isapprox(rule_i.η,1.665rule_e.η;rtol=1e-12) #src
+  @assert rule_e.τ_plus == rule_i.τ_plus == 60e-3 #src
+  @assert rule_e.γ == 1.0 && rule_i.γ == 20.0 #src
+  @assert rule_e.weight_max == 1.0 #src
+  @assert rule_i.weight_max == 0.6 #src
+  ## #src
+  connection_ie = H.ConnectionWithWeights(
+      population_i,weights_ie,population_e;plasticity_rules=(rule_e,))
+  connection_ei = H.ConnectionWithWeights(
+      population_e,weights_ei,population_i;plasticity_rules=(rule_i,))
+  connected_e = H.ConnectedPopulationExpKernel(
+      population_e,fill(h_e_reciprocal,N_e_reciprocal),(connection_ei,population_i))
+  connected_i = H.ConnectedPopulationExpKernel(
+      population_i,fill(h_i_reciprocal,N_i_reciprocal),(connection_ie,population_e))
+  recorder_ie = H.WeightMatrixRecorder(connection_ie.weights,interval,duration)
+  recorder_ei = H.WeightMatrixRecorder(connection_ei.weights,interval,duration)
+  n_bins = floor(Int,duration/interval)
+  recorder_e = NeuronRateRecorder(population_e.label,Float64(interval),zeros(n_bins,N_e_reciprocal))
+  recorder_i = NeuronRateRecorder(population_i.label,Float64(interval),zeros(n_bins,N_i_reciprocal))
+  network = H.RecurrentNetworkExpKernel(
+      (connected_e,connected_i),(recorder_ie,recorder_ei,recorder_e,recorder_i))
+  H.reset!(network)
+  H.reset!(rule_e)
+  H.reset!(rule_i)
+  initial_ie = copy(connection_ie.weights)
+  initial_ei = copy(connection_ei.weights)
+  time_now = 0.0
+  while time_now < duration
+    time_now = H.dynamics_step!(time_now,network)
+  end
+  content_ie = H.get_content(recorder_ie)
+  content_ei = H.get_content(recorder_ei)
+  rate_times = ((1:n_bins) .- 0.5).*interval
+  return (
+      times_ie=vcat(0.0,content_ie.times),
+      times_ei=vcat(0.0,content_ei.times),
+      weights_ie=cat(reshape(initial_ie,1,N_i_reciprocal,N_e_reciprocal),content_ie.weights;dims=1),
+      weights_ei=cat(reshape(initial_ei,1,N_e_reciprocal,N_i_reciprocal),content_ei.weights;dims=1),
+      final_ie=copy(connection_ie.weights),final_ei=copy(connection_ei.weights),
+      rate_times_e=rate_times,rates_e=copy(recorder_e.rates),
+      rate_times_i=rate_times,rates_i=copy(recorder_i.rates))
+end;
+
+# ### Run the sixteen-hour reciprocal experiment
+
+execution_seconds_reciprocal = @elapsed begin
+  result_reciprocal = simulate_reciprocal_competition()
+end;
+
+## #src
+for (times,weights,final_weights,n_post,n_pre,initial_weight) in ( #src
+    (result_reciprocal.times_ie,result_reciprocal.weights_ie,result_reciprocal.final_ie,N_i_reciprocal,N_e_reciprocal,weight_start_e_reciprocal), #src
+    (result_reciprocal.times_ei,result_reciprocal.weights_ei,result_reciprocal.final_ei,N_e_reciprocal,N_i_reciprocal,weight_start_i_reciprocal)) #src
+  @assert size(weights) == (length(times),n_post,n_pre) #src
+  @assert size(final_weights) == (n_post,n_pre) #src
+  @assert times[1] == 0.0 #src
+  @assert all(diff(times) .> 0.0) #src
+  @assert all(weights[1,:,:] .== initial_weight) #src
+  @assert all(isfinite,weights) && all(weights .>= 0.0) #src
+  @assert all(isfinite,final_weights) && all(final_weights .>= 0.0) #src
+end #src
+for (times,rates,n_neurons) in ((result_reciprocal.rate_times_e,result_reciprocal.rates_e,N_e_reciprocal),(result_reciprocal.rate_times_i,result_reciprocal.rates_i,N_i_reciprocal)) #src
+  @assert size(rates) == (length(times),n_neurons) #src
+  @assert !isempty(times) #src
+  @assert all(diff(times) .> 0.0) #src
+  @assert all(isfinite,rates) && all(rates .>= 0.0) #src
+end #src
+@assert all(result_reciprocal.weights_ie .<= weight_max_e_reciprocal) #src
+@assert all(result_reciprocal.final_ie .<= weight_max_e_reciprocal) #src
+@assert all(result_reciprocal.weights_ei .<= weight_max_i_reciprocal) #src
+@assert all(result_reciprocal.final_ei .<= weight_max_i_reciprocal) #src
+println("Reciprocal E/I example validation passed.") #src
+## #src
+
+# #### Weights and individual firing rates
+
+# The top panel shows all 25 excitatory weights in blue; the middle panel
+# shows all 25 inhibitory weight magnitudes in red. The bottom panel shows
+# each neuron’s firing rate in 60-second bins, with a dashed line
+# marking the nominal 30 Hz target for inhibitory firing.
+
+excitatory_weight_figure_reciprocal = plot(
+    result_reciprocal.times_ie./3600,reshape(result_reciprocal.weights_ie,length(result_reciprocal.times_ie),:);
+    color=:blue,linewidth=3,label=false,legend=false,
+    ylabel="excitatory weight",title="Reciprocal excitatory and inhibitory network")
+inhibitory_weight_figure_reciprocal = plot(
+    result_reciprocal.times_ei./3600,reshape(result_reciprocal.weights_ei,length(result_reciprocal.times_ei),:);
+    color=:red,linewidth=3,label=false,legend=false,ylabel="inhibitory weight")
+exc_rate_colors_reciprocal = permutedims([:navy,:blue,:royalblue,:deepskyblue,:aqua])
+inh_rate_colors_reciprocal = permutedims([:darkred,:firebrick,:red,:orangered,:coral])
+rate_figure_reciprocal = plot(result_reciprocal.rate_times_e./3600,result_reciprocal.rates_e;
+    color=exc_rate_colors_reciprocal,label=permutedims(["E$(j)" for j in 1:N_e_reciprocal]),
+    ylabel="rate (Hz)",linewidth=1.5,
+    xlabel="time (hours)",ylims=(0.0,Inf))
+plot!(rate_figure_reciprocal,result_reciprocal.rate_times_i./3600,result_reciprocal.rates_i;
+    color=inh_rate_colors_reciprocal,label=permutedims(["I$(j)" for j in 1:N_i_reciprocal]),linewidth=1.5)
+hline!(rate_figure_reciprocal,[r_target_i_reciprocal];
+    color=:gray,linestyle=:dash,linewidth=2,label="I target (30 Hz)",
+    legend=:outerright,legendfontsize=7)
+competition_figure_reciprocal = plot(excitatory_weight_figure_reciprocal,inhibitory_weight_figure_reciprocal,rate_figure_reciprocal;
+    layout=grid(3,1;heights=[0.35,0.35,0.30]),link=:x,
+    xlims=(0.0,simulation_duration_reciprocal/3600),size=(1000,1000),
+    left_margin=6Plots.mm,bottom_margin=4Plots.mm);
+
+competition_figure_reciprocal
+
+# Simulation execution time, including first-use compilation and excluding plotting:
+
+println("Execution time: ",round(execution_seconds_reciprocal/60;digits=1)," minutes (",round(Int,execution_seconds_reciprocal)," seconds).") #hide
+
+# #### Final reciprocal connection matrices
+
+# Left: E → I in `post <- pre` order. Right: I → E, transposed and multiplied by -1.
+# Thus both halves have inhibitory neurons on rows and excitatory neurons on
+# columns, so corresponding neuron pairs line up. The gray line separates the
+# two directions. Red indicates inhibition, white zero, and blue excitation.
+
+signed_weights_reciprocal = hcat(result_reciprocal.final_ie,-permutedims(result_reciprocal.final_ei))
+color_min_reciprocal,color_max_reciprocal = extrema(signed_weights_reciprocal)
+zero_position_reciprocal = -color_min_reciprocal/(color_max_reciprocal-color_min_reciprocal)
+weight_colors_reciprocal = cgrad([:red,:white,:blue],[0.0,zero_position_reciprocal,1.0])
+connection_matrix_figure_reciprocal = heatmap(
+    1:2N_e_reciprocal,1:N_i_reciprocal,signed_weights_reciprocal;
+    color=weight_colors_reciprocal,clims=(color_min_reciprocal,color_max_reciprocal),
+    colorbar_title="signed weight",colorbar_ticks=[color_min_reciprocal,0.0,color_max_reciprocal],
+    xticks=(1:2N_e_reciprocal,vcat(["E$(j)" for j in 1:N_e_reciprocal],["E$(j)" for j in 1:N_e_reciprocal])),
+    yticks=(1:N_i_reciprocal,["I$(i)" for i in 1:N_i_reciprocal]),
+    yflip=true,aspect_ratio=:equal,xlims=(0.5,2N_e_reciprocal+0.5),ylims=(0.5,N_i_reciprocal+0.5),
+    xlabel="E → I (left)     |     I → E, transposed (right)",
+    ylabel="inhibitory neuron",title="Final reciprocal weights",
+    size=(1000,550),left_margin=6Plots.mm,bottom_margin=4Plots.mm)
+vline!(connection_matrix_figure_reciprocal,[N_e_reciprocal+0.5];color=:gray,linewidth=2,label=false);
+
+## #src
+@assert size(signed_weights_reciprocal) == (N_i_reciprocal,2N_e_reciprocal) #src
+@assert signed_weights_reciprocal[:,1:N_e_reciprocal] == result_reciprocal.final_ie #src
+@assert signed_weights_reciprocal[:,N_e_reciprocal+1:end] == -permutedims(result_reciprocal.final_ei) #src
+@assert color_min_reciprocal < 0.0 < color_max_reciprocal #src
+@assert isapprox(color_min_reciprocal+zero_position_reciprocal*(color_max_reciprocal-color_min_reciprocal),0.0;atol=1e-12) #src
+## #src
+connection_matrix_figure_reciprocal
+
+# ### What this experiment shows
+
+# The explicit rate objective and winner-take-all competition act on E → I
+# connections: excitatory inputs compete to drive each inhibitory neuron toward
+# its nominal 30 Hz target. I → E weights instead respond to spike correlations
+# through a symmetric pairwise window with balanced positive and negative areas
+# (``B=0``). The pairwise window has no net bias for independent Poisson firing,
+# but the full rule here also includes ``\alpha_{\text{pre}}=-1`` and ``\alpha_{\text{post}}=1``.
+#
+# The intuition is that an E → I connection makes an excitatory spike more
+# likely to be followed by an inhibitory spike. Viewed from the reciprocal
+# I → E synapse, this is a positive correlation at negative pre–post lag:
+# the postsynaptic E spike precedes the presynaptic I spike. Short-lag positive
+# correlations potentiate the symmetric inhibitory rule. Stronger inhibition
+# can then suppress E spikes after an I spike, producing a negative correlation
+# at positive lag that can oppose that potentiation.
+#
+# A negative ``\alpha_{\text{pre}}`` can
+# offset potentiation and help avoid excessive inhibition. Here the positive
+# ``\alpha_{\text{post}}`` also contributes: for independent firing, the alpha drift
+# is ``η_i(r_E-r_I)`` for each I → E synapse.
+#
+# The remaining limitation is that excitatory competition does not enforce
+# distinct choices across inhibitory neurons. Several I neurons can select the
+# same E neuron as their strongest excitatory input, while other E neurons may end
+# up with no appreciable outgoing connection to I. Competition within each
+# I neuron's inputs therefore does not ensure coverage of the E population.
+# How to encourage different inhibitory neurons to select different excitatory
+# partners remains an open question in this example.
