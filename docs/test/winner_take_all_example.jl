@@ -1,5 +1,5 @@
 module WinnerTakeAllExample
-const source_path = joinpath(@__DIR__,"..","docs","literate",
+const source_path = joinpath(@__DIR__,"..","literate",
     "07_winner_take_all_self_stabilizing_plasticity.jl")
 const source = read(source_path,String)
 const parameters = first(split(source,"# ### STDP kernel";limit=2))
@@ -17,7 +17,7 @@ const inhibitory_prediction = first(split(last(split(source,
     "# ### Build the inhibitory feedforward network";limit=2))
 const combined_definitions = first(split(last(split(source,
     "# ## Both excitatory and inhibitory";limit=2)),
-    "# ### Follow all ten weights";limit=2))
+    "# ### Follow all six weights";limit=2))
 const definitions = parameters*simulation*inhibitory_parameters*
     inhibitory_prediction*inhibitory_simulation*combined_definitions
 include_string(@__MODULE__,definitions,source_path)

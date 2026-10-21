@@ -1,7 +1,7 @@
 # Load the worked example's actual definitions, without its long simulation
-# and plotting section or a dependency on the documentation environment.
+# and plotting section.
 module ThreeNeuronMotifExample
-const source_path = joinpath(@__DIR__,"..","docs","literate",
+const source_path = joinpath(@__DIR__,"..","literate",
     "06_three_neuron_inhibitory_motif.jl")
 const definitions = first(split(read(source_path,String),
     "# ## Configure and run the comparison";limit=2))

@@ -48,6 +48,16 @@ When dealing with connectivity and recursion, use a "post <- pre" ordering, mean
 
 ## Testing
 
+- Keep package tests lightweight and independent of documentation. Files in
+  `test/` must test the package API directly; do not load, parse, or extract code
+  from `docs/literate/` or other documentation sources.
+- Do not add plotting, rendering, or documentation packages (such as `Plots`,
+  `Literate`, or `Documenter`) to the root project or its test dependencies for
+  example validation. Keep documentation dependencies in `docs/Project.toml`.
+  Any new test-only dependency must be necessary for package behavior tests.
+- Put checks of documentation examples in `docs/test/` and run them with
+  `julia --project=docs docs/test/runtests.jl` in the documentation CI job,
+  separately from `Pkg.test()`. Keep example parameter assertions there too.
 - For package implementation changes, use the standard Julia package test flow:
 
   ```sh
@@ -61,10 +71,9 @@ When dealing with connectivity and recursion, use a "post <- pre" ordering, mean
 - Documentation examples are validated by executing or rendering the affected
   example. Changes confined to example parameters, plots, or prose do not require
   the full package test suite, even when the example contains executable Julia.
-- Do not add unit tests solely to pin documentation parameter choices. If existing
-  tests depend on changed example parameters, keep those assertions consistent
-  and run the affected tests when needed; this alone does not require a full
-  package test run.
+- Do not add package unit tests solely to pin documentation parameter choices.
+  Update and run the affected documentation checks when example parameters
+  change; this alone does not require a full package test run.
 - Organize tests into focused `@testset`s by component or behavior. It is fine
   to split tests into additional files and `include` them from
   `test/runtests.jl` as coverage grows.
